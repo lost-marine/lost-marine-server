@@ -3,9 +3,7 @@
 
 
 # 현재 브랜치명 가져오기
-branch_name=$(git branch --show-current)
-
-echo branch_name
+BRANCH_NAME=$(git branch --show-current)
 
 if echo "$BRANCH_NAME" | grep -qE "[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]"; then
   echo -e "Branch name error: 브랜치명에 한글을 포함할 수 없습니다.\n브랜치명은 영어 소문자, 대시/, 하이픈- 기호로만 작성해주세요."
