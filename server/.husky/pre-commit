@@ -41,4 +41,4 @@ if echo "$BRANCH_NAME" | grep -qE "(^[/\-])|([/\-]$)"; then
 fi
 
 
-yarn lint
+cd server && yarn lint

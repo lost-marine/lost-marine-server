@@ -1,10 +1,13 @@
 {
   "dependencies": {
+    "eslint-config-prettier": "^9.1.0",
     "express": "^4.18.2",
     "nodemon": "^3.1.0",
+    "prettier": "^3.2.5",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "@rushstack/eslint-patch": "^1.7.2",
     "@types/node": "^20.11.22",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
     "eslint": "^8.0.1",
@@ -12,11 +15,15 @@
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
     "eslint-plugin-promise": "^6.0.0",
+    "husky": "8.0.3",
     "vite": "^5.1.4",
     "vite-plugin-node": "^3.1.0"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "postinstall": "cd .. && husky install server/.husky",
+    "format": "prettier --cache --write .",
+    "lint": "cd .. && eslint --cache --cache-location server/.eslintcache --fix --ext .ts server/src/"
   }
 }
