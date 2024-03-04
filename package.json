@@ -1,15 +1,40 @@
 {
+  "name": "template-vue-ts",
+  "description": "A Phaser 3 TypeScript project template that demonstrates Vue communication and uses Vite for bundling.",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phaserjs/template-vue-ts.git"
+  },
+  "author": "Phaser Studio <support@phaser.io> (https://phaser.io/)",
+  "license": "MIT",
+  "licenseUrl": "http://www.opensource.org/licenses/mit-license.php",
+  "bugs": {
+    "url": "https://github.com/phaserjs/template-vue-ts/issues"
+  },
+  "homepage": "https://github.com/phaserjs/template-vue-ts#readme",
+  "keywords": [
+    "phaser",
+    "phaser3",
+    "typescript",
+    "vue",
+    "vite"
+  ],
+  "scripts": {
+    "dev": "cd server && vite",
+    "build": "cd server && vite build",
+    "postinstall": "husky install",
+    "format": "prettier --cache --write .",
+    "lint": "eslint --cache --fix --ext .ts server/src/"
+  },
   "dependencies": {
-    "express": "^4.18.2",
-    "nodemon": "^3.1.0",
-    "typescript": "^5.3.3"
+    "eslint-config-prettier": "^9.1.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.22",
-    "vite": "^5.1.4",
-    "vite-plugin-node": "^3.1.0"
-  },
-  "scripts": {
-    "dev": "vite"
+    "@rushstack/eslint-patch": "^1.7.2",
+    "eslint": "^8.57.0",
+    "husky": "8.0.3",
+    "prettier": "^3.2.5",
+    "vite": "^5.0.11"
   }
 }
