@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { Service } from "typedi";
-import { Player } from "../classes/player";
+import { Player } from "@/classes/player";
 import { type PlayerResponse } from "@/types";
 
 @Service()

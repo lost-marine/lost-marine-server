@@ -1,4 +1,4 @@
-import { type Player } from "./../classes/player";
+import { type Player } from "@/classes/player";
 
 type GlobalStore = {
   playerList: null | Map<number, Player>;
