@@ -8,6 +8,9 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 3000
   },
+  ssr: {
+    noExternal: ["typedi"] // Avoid externalizing TypeDI
+  },
   plugins: [
     ...VitePluginNode({
       // Nodejs native Request adapter

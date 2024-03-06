@@ -8,4 +8,5 @@ export class Creature {
   type: number = 0;
   power: number = 0;
   status: number = 0;
+  isFlipX: boolean;
 }

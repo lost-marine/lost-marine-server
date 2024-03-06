@@ -1,4 +1,4 @@
-import { Creature } from "./Creature";
+import { Creature } from "./creature";
 
 export class Player extends Creature {
   startX: number = 0;
@@ -17,6 +17,7 @@ export class Player extends Creature {
   level: number = 0;
   experience: number = 0;
   socketId: string = "";
+  isFlipX: boolean = false;
 
   constructor(playerId: number, nickname: string, startX: number, startY: number, socketId: string) {
     super();
