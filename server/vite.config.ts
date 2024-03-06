@@ -5,6 +5,7 @@ export default defineConfig({
   // ...vite configures
   server: {
     // vite server configs, for details see [vite doc](https://vitejs.dev/config/#server-host)
+    host: "0.0.0.0",
     port: 3000
   },
   plugins: [
@@ -15,7 +16,7 @@ export default defineConfig({
       adapter: "express",
 
       // tell the plugin where is your project entry
-      appPath: "./src/app.ts",
+      appPath: "./src/server.ts",
 
       // Optional, default: 'viteNodeApp'
       // the name of named export of you app from the appPath file
