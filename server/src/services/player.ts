@@ -26,6 +26,19 @@ export class PlayerService {
   }
 
   /**
+   * 닉네임 검증 로직
+   * @date 3/6/2024 - 5:52:27 PM
+   *
+   * @param {string} nickname
+   * @returns {boolean}
+   */
+  validateNickName(nickname: string): boolean {
+    const regexp: RegExp = /^[가-힣A-Za-z0-9]{2,12}$/;
+    const result: boolean = regexp.test(nickname);
+    return result;
+  }
+
+  /**
    * playerList를 배열로 변환하여 반환해줌
    * @date 3/6/2024 - 4:53:52 PM
    *
