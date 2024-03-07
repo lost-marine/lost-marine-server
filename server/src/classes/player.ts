@@ -27,4 +27,18 @@ export class Player extends Creature {
     this.startY = startY;
     this.socketId = socketId;
   }
+
+  /**
+   * 플레이어 위치 정보 갱신
+   * 추후 상태값이랑 체력 정보 수정 필요
+   * @date 3/7/2024 - 10:45:49 AM
+   *
+   * @param {Player} player
+   */
+  updatePlayerInfo(player: Player): void {
+    this.direction = player.direction;
+    this.startX = player.startX;
+    this.startY = player.startY;
+    this.isFlipX = player.isFlipX;
+  }
 }

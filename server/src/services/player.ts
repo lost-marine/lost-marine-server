@@ -57,6 +57,24 @@ export class PlayerService {
   }
 
   /**
+   * 플레이어 정보 업데이트(위치, 상태)
+   * @date 3/7/2024 - 11:02:47 AM
+   *
+   * @param {Player} player
+   * @returns {Player[]}
+   */
+  updatePlayerInfo(player: Player): Player[] {
+    const playerId = player.playerId;
+    const item: Player | undefined = global.playerList?.get(playerId);
+    console.log(item);
+
+    item?.updatePlayerInfo(player);
+    global.playerList?.set(playerId, item);
+
+    return this.getPlayerList();
+  }
+
+  /**
    * 플레이어 아이디로 삭제
    * @date 3/7/2024 - 9:13:23 AM
    *
