@@ -100,11 +100,10 @@
       playerId: 1,
       startX: 1.5,
       startY: 2,
-      direction: 0
+      direction: 0,
+      isFlipX: true
     };
-    var data = {
-      data: user
-    };
+
     socket.emit("my-position-sync", user);
   });
 
