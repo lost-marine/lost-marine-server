@@ -64,7 +64,25 @@ io.on("connection", (socket: Socket) => {
     const result = playerService.deletePlayerBySocketId(socket.id);
     sendWithoutMe(socket, "quit", result);
   });
+
+  // 플레이어 위치 싱크
+  setInterval(() => {
+    sendToAll(socket, "others-position-sync", playerService.getPlayerList());
+  }, 20000);
 });
+
+/**
+ * 전체 사용자에게 데이터를 전달함
+ * @date 3/7/2024 - 1:48:07 PM
+ * @author 양소영
+ *
+ * @param {Socket} socket
+ * @param {string} event
+ * @param {*} data
+ */
+function sendToAll(socket: Socket, event: string, data: any): void {
+  socket.emit(event, data);
+}
 
 /**
  * 자신에게만 보내줌
