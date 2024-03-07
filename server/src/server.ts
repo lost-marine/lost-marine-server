@@ -9,7 +9,7 @@ import Container from "typedi";
 import { type EnterValidateRespone, type PlayerResponse } from "./types";
 
 const dirname = path.resolve();
-const port: number = Number(3200); // 소켓 서버 포트
+const port: number = 3000; // 소켓 서버 포트
 const endpoint: string = "localhost";
 const app = express();
 const httpServer = http.createServer(app);

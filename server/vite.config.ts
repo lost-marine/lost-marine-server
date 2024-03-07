@@ -6,12 +6,6 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 3000,
-    proxy: {
-      "/socket.io": {
-        target: "ws://localhost:3200",
-        ws: true
-      }
-    }
   },
   ssr: {
     noExternal: ["typedi"]
@@ -21,7 +15,7 @@ export default defineConfig({
       adapter: "express",
       appPath: "./src/server.ts",
       exportName: "viteNodeApp",
-      initAppOnBoot: false,
+      initAppOnBoot: true,
       tsCompiler: "esbuild",
       swcOptions: {}
     }),
