@@ -45,6 +45,13 @@ io.on("connection", (socket: Socket) => {
       sendToMe(socket, "game-start", response);
     }
   });
+
+  // 플레이어 본인 위치 전송
+  socket.on("my-position-sync", (data: Player) => {
+    const result = playerService.updatePlayerInfo(data);
+    // 다른 플레이어에게 변경사항 알려줌
+    sendWithoutMe(socket, "others-position-sync", result);
+  });
 });
 
 /**
