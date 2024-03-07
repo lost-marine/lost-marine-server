@@ -6,7 +6,7 @@ import { PlayerService } from "./services/player";
 import { type Player } from "./classes/player";
 import "reflect-metadata";
 import Container from "typedi";
-import { type PlayerResponse } from "./types";
+import { type EnterValidateRespone, type PlayerResponse } from "./types";
 
 const dirname = path.resolve();
 const port: number = Number(3200); // 소켓 서버 포트
@@ -34,11 +34,16 @@ io.on("connection", (socket: Socket) => {
   const playerService = Container.get<PlayerService>(PlayerService);
   // 참가자 본인 입장(소켓 연결)
   socket.on("enter", (player: Player, callback) => {
-    const result: boolean = playerService.validateNickName(player.nickname);
-    callback(result);
+    const isSuccess: boolean = playerService.validateNickName(player.nickname);
+    const msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
+    const response: EnterValidateRespone = {
+      isSuccess,
+      msg
+    };
+    callback(response);
 
     // 닉네임 검증
-    if (result) {
+    if (isSuccess) {
       // 성공한 경우에만 플레이어 추가
       const response: PlayerResponse = playerService.addPlayer(player, socket.id);
       sendWithoutMe(socket, "enter", response.myInfo);
