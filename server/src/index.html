@@ -118,6 +118,13 @@
     messages.appendChild(item);
   });
 
+  socket.on("game-start", function (msg) {
+    console.log(msg);
+    var item = document.createElement("li");
+    item.textContent = msg;
+    messages.appendChild(item);
+  });
+
   socket.on("others-position-sync", function (msg) {
     console.log(msg);
     var item = document.createElement("li");
