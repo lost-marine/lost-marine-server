@@ -55,4 +55,33 @@ export class PlayerService {
     };
     return result;
   }
+
+  /**
+   * 플레이어 아이디로 삭제
+   * @date 3/7/2024 - 9:13:23 AM
+   *
+   * @param {number} playerId
+   */
+  deletePlayerByPlayerId(playerId: number): void {
+    global.playerList?.delete(playerId);
+  }
+
+  /**
+   * 소켓 아이디로 삭제
+   * @date 3/7/2024 - 9:14:10 AM
+   *
+   * @param {string} socketId
+   * @returns {number}
+   */
+  deletePlayerBySocketId(socketId: string): number {
+    let playerId: number = 0;
+
+    global.playerList?.forEach((value, key) => {
+      if (value.socketId === socketId) {
+        playerId = key;
+        global.playerList?.delete(key);
+      }
+    });
+    return playerId;
+  }
 }
