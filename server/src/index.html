@@ -88,12 +88,9 @@
   exit.addEventListener("click", function (e) {
     e.preventDefault();
     var data = {
-      code: 1002,
-      data: {
-        userId: 1
-      }
+      playerId: 1
     };
-    socket.emit("", data);
+    socket.emit("quit", data);
   });
 
   send.addEventListener("click", function (e) {
@@ -132,7 +129,7 @@
     messages.appendChild(item);
   });
 
-  socket.on("", function (msg) {
+  socket.on("quit", function (msg) {
     console.log(msg);
     var item = document.createElement("li");
     item.textContent = msg;

@@ -52,6 +52,18 @@ io.on("connection", (socket: Socket) => {
     // 다른 플레이어에게 변경사항 알려줌
     sendWithoutMe(socket, "others-position-sync", result);
   });
+
+  // 플레이어 본인 퇴장
+  socket.on("quit", (playerId: number) => {
+    playerService.deletePlayerByPlayerId(playerId);
+    sendWithoutMe(socket, "quit", playerId);
+  });
+
+  // 새로고침이나 창닫음으로 연결이 끊기는 경우
+  socket.on("disconnect", () => {
+    const result = playerService.deletePlayerBySocketId(socket.id);
+    sendWithoutMe(socket, "quit", result);
+  });
 });
 
 /**
