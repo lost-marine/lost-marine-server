@@ -1,4 +1,4 @@
-import { Creature } from "./creature";
+import { Creature } from "@/classes/creature";
 
 export class Player extends Creature {
   startX: number = 0;
