@@ -1,5 +1,5 @@
 {
-  "include": ["./.eslintrc.js", "./src/**/*", "./src/**/*.ts"],
+  "include": ["./.eslintrc.js", "./src/**/*", "./src/**/*.ts", "vite.config.ts"],
   "compilerOptions": {
     "composite": true,
     "noEmit": true,
