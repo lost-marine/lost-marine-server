@@ -93,17 +93,16 @@ export class PlayerService {
    * @date 3/8/2024 - 9:33:23 AM
    * @author 양소영
    *
-   * TODO: 플랑크톤 아이디로 충돌 여부 확인
    * @param {number} playerId
    * @param {number} planktonId
    */
-  eatPlankton(playerId: number, planktonId: number): void {
+  eatPlankton(playerId: number): Player {
     const player: Player = global.playerList?.get(playerId);
 
     if (player !== undefined) {
       player.planktonCount++;
-      global.playerList?.set(playerId, player);
     }
+    return player;
   }
 
   /**
