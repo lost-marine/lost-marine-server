@@ -1,6 +1,5 @@
 import { Plankton } from "@/classes/plankton";
 import RBush from "rbush";
-import { getSpawnablePosition } from "@/util/map";
 import { createBuilder } from "@/util/builder";
 import { Inject, Service, Container } from "typedi";
 import "reflect-metadata";
