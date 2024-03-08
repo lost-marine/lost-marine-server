@@ -1,7 +1,9 @@
 import "reflect-metadata";
-import { Service } from "typedi";
+import Container, { Service } from "typedi";
 import { Player } from "@/classes/player";
 import { type PlayerResponse } from "@/types";
+import { MapService } from "./map";
+import { type Position } from "@/classes/position";
 
 @Service()
 export class PlayerService {
@@ -21,8 +23,10 @@ export class PlayerService {
    * @returns {PlayerResponse}
    */
   initPlayer(player: Player, socketId: string): Player {
+    const mapService = Container.get<MapService>(MapService);
+    const pos: Position = mapService.getSpawnablePosition(0);
     const nickname = player.nickname;
-    const myInfo = new Player(++this.count, nickname, 100, 200, socketId);
+    const myInfo = new Player(++this.count, nickname, pos.x, pos.y, socketId);
     return myInfo;
   }
 
