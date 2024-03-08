@@ -6,8 +6,9 @@ import { PlayerService } from "./services/player";
 import { type Player } from "./classes/player";
 import "reflect-metadata";
 import Container from "typedi";
-import { type EnterValidateRespone, type PlayerResponse } from "./types";
+import { type GameStartData, type EnterValidateRespone, type PlayerResponse, type PlanktonEatResponse } from "./types";
 import { PlanktonService } from "./services/plankton";
+import { type Plankton } from "./classes/plankton";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -15,10 +16,10 @@ const endpoint: string = "localhost";
 const app = express();
 
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-  res.setHeader('Access-Control-Allow-Headers', '*');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
   next();
 });
 
@@ -42,11 +43,21 @@ app.get("/", (req: Request, res: Response) => {
 
 io.on("connection", (socket: Socket) => {
   const playerService = Container.get<PlayerService>(PlayerService);
-  Container.set('width', 2688)
-  Container.set('height', 1536)
-  Container.set('planktonCnt', 50)
+  Container.set("width", 2688);
+  Container.set("height", 1536);
+  Container.set("planktonCnt", 50);
   const planktonManager = Container.get<PlanktonService>(PlanktonService);
-  planktonManager.initPlankton();
+
+  if (global.playerList?.size === 0) {
+    planktonManager.initPlankton();
+  }
+
+  // 플랑크톤 리스폰
+  if (planktonManager.eatedPlanktonCnt > 20) {
+    planktonManager.eatedPlanktonCnt = 0;
+    sendToAll(socket, "plankton-respawn", planktonManager.spawnPlankton());
+  }
+
   // 참가자 본인 입장(소켓 연결)
   socket.on("enter", (player: Player, callback) => {
     const isSuccess: boolean = playerService.validateNickName(player.nickname);
@@ -61,8 +72,9 @@ io.on("connection", (socket: Socket) => {
     if (isSuccess) {
       // 성공한 경우에만 플레이어 추가
       const response: PlayerResponse = playerService.addPlayer(player, socket.id);
+      const planktonList: Plankton[] = [...global.planktonList.values()];
       sendWithoutMe(socket, "enter", response.myInfo);
-      sendToMe(socket, "game-start", Object.assign({}, response, {'planktonList':[...global.planktonList.values()]}));
+      sendToMe(socket, "game-start", { ...response, planktonList } satisfies GameStartData);
     }
   });
 
@@ -85,6 +97,17 @@ io.on("connection", (socket: Socket) => {
   socket.on("disconnect", () => {
     const result = playerService.deletePlayerBySocketId(socket.id);
     sendWithoutMe(socket, "quit", result);
+  });
+
+  // 플랑크톤 섭취 이벤트
+  socket.on("plankton-eat", (data: { playerId: number; planktonId: number }, callback) => {
+    const result: PlanktonEatResponse = planktonManager.eatedPlankton(data.planktonId, data.playerId);
+
+    callback(result);
+
+    if (result.isSuccess) {
+      sendWithoutMe(socket, "plankton-delete", data.planktonId);
+    }
   });
 
   // 플레이어 위치 싱크
