@@ -88,9 +88,12 @@
   exit.addEventListener("click", function (e) {
     e.preventDefault();
     var data = {
-      playerId: 1
+      playerId: 1,
+      attackedPlayerId: 2
     };
-    socket.emit("quit", data);
+    socket.emit("player-crash", data, (response) => {
+      console.log(response);
+    });
   });
 
   send.addEventListener("click", function (e) {
@@ -129,6 +132,19 @@
   });
 
   socket.on("quit", function (msg) {
+    console.log(msg);
+    var item = document.createElement("li");
+    item.textContent = msg;
+    messages.appendChild(item);
+  });
+
+  socket.on("player-status-sync", function (msg) {
+    console.log(msg);
+    var item = document.createElement("li");
+    item.textContent = msg;
+    messages.appendChild(item);
+  });
+  socket.on("game-over", function (msg) {
     console.log(msg);
     var item = document.createElement("li");
     item.textContent = msg;

@@ -6,9 +6,14 @@ export type PlayerResponse = {
   playerList: Player[];
 };
 
-export type EnterValidateRespone = {
+export type ValidateRespone = {
   isSuccess: boolean;
   msg: string;
+};
+
+export type PlayerCrashRequest = {
+  playerId: number;
+  attackedPlayerId: number;
 };
 
 export type GameStartData = {
