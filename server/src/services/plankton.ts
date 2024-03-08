@@ -2,14 +2,21 @@ import { Plankton } from '@/classes/plankton';
 import RBush from 'rbush';
 import { getSpawnablePosition } from '@/util/map';
 import { createBuilder } from '@/util/builder';
-import { Service } from 'typedi'
+import { Inject, Service } from 'typedi'
+import "reflect-metadata";
 
 @Service()
 export class PlanktonService {
 
-    width: number; // 맵 전체의 너비
-    height: number; // 맵 전체의 높이
-    planktonCnt: number; // 전체 플랑크톤 개수
+    @Inject('width')
+    width: number;
+
+    @Inject('height')
+    height: number;
+
+    @Inject("planktonCnt")
+    planktonCnt: number;
+    
     idCounter: number;
     eatedPlanktonCnt: number; // 잡아 먹힌 플랑크톤의 개수
     
@@ -24,11 +31,8 @@ export class PlanktonService {
      * @param {number} height 맵 전체의 높이
      * @param {number} planktonCnt 전체 플랑크톤의 개수
      */
-    private constructor(width: number, height: number, planktonCnt: number){
+    constructor(){
 
-        this.width = width;
-        this.height = height;
-        this.planktonCnt =  planktonCnt;
         global.planktonTree = new RBush();
         this.idCounter= 1;
         global.planktonList = new Map();
@@ -37,7 +41,7 @@ export class PlanktonService {
     }
 
     /**
-     * Description placeholder
+     * 초기 플랑크톤을 생성합니다.
      * @date 3/7/2024 - 1:49:29 PM
      * @author 박연서
      */
@@ -61,11 +65,11 @@ export class PlanktonService {
             global.planktonTree?.insert(plankton.makeTplanktonType());
             this.idCounter++;
         }
-
     }
 
     /**
-     * Description placeholder
+     * 플랑크톤을 잡아먹습니다.
+     * 잡아먹힌 플랑크톤은 planktonList와 planktonTree에서 삭제됩니다.
      * @date 3/7/2024 - 1:25:51 PM
      * @author 박연서
      *
@@ -84,7 +88,7 @@ export class PlanktonService {
     }
     
     /**
-     * Description placeholder
+     * 플랑크톤을 재생성합니다.
      * @date 3/7/2024 - 1:25:38 PM
      * @author 박연서
      *

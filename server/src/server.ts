@@ -7,11 +7,21 @@ import { type Player } from "./classes/player";
 import "reflect-metadata";
 import Container from "typedi";
 import { type EnterValidateRespone, type PlayerResponse } from "./types";
+import { PlanktonService } from "./services/plankton";
 
 const dirname = path.resolve();
-const port: number = Number(3200); // 소켓 서버 포트
+const port: number = 3200; // 소켓 서버 포트
 const endpoint: string = "localhost";
 const app = express();
+
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
@@ -32,6 +42,11 @@ app.get("/", (req: Request, res: Response) => {
 
 io.on("connection", (socket: Socket) => {
   const playerService = Container.get<PlayerService>(PlayerService);
+  Container.set('width', 2688)
+  Container.set('height', 1536)
+  Container.set('planktonCnt', 50)
+  const planktonManager = Container.get<PlanktonService>(PlanktonService);
+  planktonManager.initPlankton();
   // 참가자 본인 입장(소켓 연결)
   socket.on("enter", (player: Player, callback) => {
     const isSuccess: boolean = playerService.validateNickName(player.nickname);
@@ -47,9 +62,11 @@ io.on("connection", (socket: Socket) => {
       // 성공한 경우에만 플레이어 추가
       const response: PlayerResponse = playerService.addPlayer(player, socket.id);
       sendWithoutMe(socket, "enter", response.myInfo);
-      sendToMe(socket, "game-start", response);
+      sendToMe(socket, "game-start", Object.assign({}, response, {'planktonList':[...global.planktonList.values()]}));
     }
   });
+
+  // game start
 
   // 플레이어 본인 위치 전송
   socket.on("my-position-sync", (data: Player) => {

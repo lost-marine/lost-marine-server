@@ -7,10 +7,12 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 3000,
     proxy: {
-      "/socket.io": {
-        target: "ws://localhost:3200",
-        ws: true
-      }
+      // 프록시 대상 서버의 엔드포인트와 옵션을 지정합니다.
+      '/socket.io': {
+        target: 'http://localhost:3000', // 소켓 서버의 주소
+        ws: true, // WebSocket 프록시 지원 여부
+        changeOrigin: true, // origin 헤더 변경 여부
+      },
     }
   },
   ssr: {
@@ -21,12 +23,16 @@ export default defineConfig({
       adapter: "express",
       appPath: "./src/server.ts",
       exportName: "viteNodeApp",
-      initAppOnBoot: false,
+      initAppOnBoot: true,
       tsCompiler: "esbuild",
       swcOptions: {}
     }),
     tsconfigPaths()
   ],
-  optimizeDeps: {}
+  optimizeDeps: {
+    esbuildOptions: {
+      tsconfig: 'tsconfig.json'
+    }
+  }
 });
 

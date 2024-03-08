@@ -6,12 +6,12 @@ type BuilderType<T> = {
 
 
 /**
- * Description placeholder
+ * 인자로 받은 문자열을 camelcase로 바꿉니다.
  * @date 3/7/2024 - 1:26:53 PM
  * @author 박연서
  *
  * @param {string} str
- * @returns {string} param str를 camelCase로 바꿉니다.
+ * @returns {string}
  */
 function camelCase(str: string): string {
   return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {
@@ -21,7 +21,8 @@ function camelCase(str: string): string {
 
 
 /**
- * Description placeholder
+ * class를 builder처럼 사용할 수 있게 됩니다!
+ * 사용법: createBuilder("className").set~().build()
  * @date 3/7/2024 - 1:27:13 PM
  * @author 박연서
  *

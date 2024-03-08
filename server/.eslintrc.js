@@ -25,6 +25,7 @@ module.exports = {
     sourceType: "module",
     project: "./server/tsconfig.json"
   },
+  plugins: ['@typescript-eslint'],
   rules: {
     "@typescript-eslint/consistent-type-definitions": "off"
   }
