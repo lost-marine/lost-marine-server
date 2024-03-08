@@ -2,8 +2,10 @@ import { Plankton } from "@/classes/plankton";
 import RBush from "rbush";
 import { getSpawnablePosition } from "@/util/map";
 import { createBuilder } from "@/util/builder";
-import { Inject, Service } from "typedi";
+import { Inject, Service, Container } from "typedi";
 import "reflect-metadata";
+import { PlayerService } from "./player";
+import { type PlanktonEatResponse } from "@/types";
 
 @Service()
 export class PlanktonService {
@@ -68,18 +70,24 @@ export class PlanktonService {
    * @param {number} planktonId 잡아먹힌 플랑크톤 id
    * @returns {number}
    */
-  eatedPlankton(planktonId: number, playerId: number): number {
+  eatedPlankton(planktonId: number, playerId: number): PlanktonEatResponse {
     if (global.planktonList != null && Boolean(global.planktonList.has(planktonId))) {
       const planktonInfo: Plankton = global.planktonList.get(planktonId);
       global.planktonList?.delete(planktonId);
       global.planktonTree?.remove(planktonInfo.makeTplanktonType());
       this.eatedPlanktonCnt++;
 
-      // playerService.eatPlankton(planktonId, playerId);
-      return 1;
+      const playerService = Container.get<PlayerService>(PlayerService);
+      const player = playerService.eatPlankton(playerId);
+      const result: PlanktonEatResponse = {
+        isSuccess: true,
+        player
+      };
+
+      return result;
     }
 
-    return 0;
+    return { isSuccess: false };
   }
 
   /**

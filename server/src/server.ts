@@ -6,8 +6,9 @@ import { PlayerService } from "./services/player";
 import { type Player } from "./classes/player";
 import "reflect-metadata";
 import Container from "typedi";
-import { type EnterValidateRespone, type PlayerResponse } from "./types";
+import { type GameStartData, type EnterValidateRespone, type PlayerResponse, type PlanktonEatResponse } from "./types";
 import { PlanktonService } from "./services/plankton";
+import { type Plankton } from "./classes/plankton";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -71,8 +72,9 @@ io.on("connection", (socket: Socket) => {
     if (isSuccess) {
       // 성공한 경우에만 플레이어 추가
       const response: PlayerResponse = playerService.addPlayer(player, socket.id);
+      const planktonList: Plankton[] = [...global.planktonList.values()];
       sendWithoutMe(socket, "enter", response.myInfo);
-      sendToMe(socket, "game-start", Object.assign({}, response, { planktonList: [...global.planktonList.values()] }));
+      sendToMe(socket, "game-start", { ...response, planktonList } satisfies GameStartData);
     }
   });
 
@@ -99,9 +101,7 @@ io.on("connection", (socket: Socket) => {
 
   // 플랑크톤 섭취 이벤트
   socket.on("plankton-eat", (data: { playerId: number; planktonId: number }, callback) => {
-    const result: { isSuccess: boolean } = {
-      isSuccess: planktonManager.eatedPlankton(data.planktonId, data.playerId) === Number(1)
-    };
+    const result: PlanktonEatResponse = planktonManager.eatedPlankton(data.planktonId, data.playerId);
 
     callback(result);
 
