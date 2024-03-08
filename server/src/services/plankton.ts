@@ -6,7 +6,7 @@ import { Inject, Service, Container } from "typedi";
 import "reflect-metadata";
 import { PlayerService } from "./player";
 import { type PlanktonEatResponse } from "@/types";
-import { Position } from "@/classes/position";
+import { type Position } from "@/classes/position";
 import { MapService } from "./map";
 
 @Service()
