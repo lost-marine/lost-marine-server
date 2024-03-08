@@ -46,10 +46,17 @@ io.on("connection", (socket: Socket) => {
   Container.set('height', 1536)
   Container.set('planktonCnt', 50)
   const planktonManager = Container.get<PlanktonService>(PlanktonService);
-  if(global.playerList?.size===0){
-    console.log(global.playerList.size);
+
+  if(global.playerList?.size === 0){
     planktonManager.initPlankton();
   }
+
+  // 플랑크톤 리스폰
+  if(planktonManager.eatedPlanktonCnt > 20){
+    planktonManager.eatedPlanktonCnt = 0;
+    sendToAll(socket, 'plankton-respawn', planktonManager.spawnPlankton())
+  }
+
   // 참가자 본인 입장(소켓 연결)
   socket.on("enter", (player: Player, callback) => {
     const isSuccess: boolean = playerService.validateNickName(player.nickname);
@@ -98,7 +105,7 @@ io.on("connection", (socket: Socket) => {
     }
 
     callback(result);
-    
+
     if(result.isSuccess){
       sendWithoutMe(socket, 'plankton-sync', data.planktonId);
     }
