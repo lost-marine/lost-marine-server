@@ -16,6 +16,7 @@ import {
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
+import { PLANKTON_SPAWN_LIST } from "./constants/spawnList";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -48,11 +49,12 @@ app.get("/", (req: Request, res: Response) => {
   res.sendFile(fullPath);
 });
 
+Container.set("width", 2688);
+Container.set("height", 1536);
+Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
+
 io.on("connection", (socket: Socket) => {
   const playerService = Container.get<PlayerService>(PlayerService);
-  Container.set("width", 2688);
-  Container.set("height", 1536);
-  Container.set("planktonCnt", 50);
   const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
   if (global.playerList?.size === 0) {
