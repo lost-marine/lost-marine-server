@@ -80,7 +80,7 @@ export class PlayerService {
   updatePlayerInfo(player: Player): Player[] {
     const playerId = player.playerId;
     const item: Player | undefined = global.playerList?.get(playerId);
-    console.log(item);
+    // console.log(item);
 
     item?.updatePlayerInfo(player);
     global.playerList?.set(playerId, item);

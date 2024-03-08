@@ -76,15 +76,17 @@ export class PlanktonService {
      * @param {number} planktonId 잡아먹힌 플랑크톤 id
      * @returns {number} 
      */
-    eatedPlankton(planktonId:number):void{
+    eatedPlankton(planktonId:number):number{
 
         if (global.planktonList != null && (Boolean(global.planktonList.has(planktonId)))){
-            const planktonInfo:Plankton = global.planktons.get(planktonId);
+            const planktonInfo:Plankton = global.planktonList.get(planktonId);
             global.planktonList?.delete(planktonId);
             global.planktonTree?.remove(planktonInfo.makeTplanktonType());
             this.eatedPlanktonCnt++;
-           // playerservice의 eatPlankton(playerId : number, planktonId : number) 호출
+            return 1;
         }
+
+        return 0;
     }
     
     /**
