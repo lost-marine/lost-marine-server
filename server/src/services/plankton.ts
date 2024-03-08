@@ -100,7 +100,7 @@ export class PlanktonService {
   spawnPlankton(): Plankton[] {
     const responedPlankton: Plankton[] = [];
 
-    for (let i = this.eatedPlanktonCnt; i >= 0; i--) {
+    for (let i = this.eatedPlanktonCnt; i > 0; i--) {
       const position: number[] = getSpawnablePosition(2);
       const plankton: Plankton = createBuilder(Plankton)
         .setStartX(position[0])
@@ -113,6 +113,8 @@ export class PlanktonService {
       this.idCounter++;
       responedPlankton.push(plankton);
     }
+
+    this.eatedPlanktonCnt = 0;
     return responedPlankton;
   }
 }

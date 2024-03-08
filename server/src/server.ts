@@ -52,12 +52,6 @@ io.on("connection", (socket: Socket) => {
     planktonManager.initPlankton();
   }
 
-  // 플랑크톤 리스폰
-  if (planktonManager.eatedPlanktonCnt > 20) {
-    planktonManager.eatedPlanktonCnt = 0;
-    sendToAll(socket, "plankton-respawn", planktonManager.spawnPlankton());
-  }
-
   // 참가자 본인 입장(소켓 연결)
   socket.on("enter", (player: Player, callback) => {
     const isSuccess: boolean = playerService.validateNickName(player.nickname);
@@ -107,6 +101,11 @@ io.on("connection", (socket: Socket) => {
 
     if (result.isSuccess) {
       sendWithoutMe(socket, "plankton-delete", data.planktonId);
+    }
+
+    if (planktonManager.eatedPlanktonCnt > 2) {
+      // respone을 위한 플랑크톤 개수 조절이 필요합니다.
+      sendToAll(socket, "plankton-respawn", planktonManager.spawnPlankton());
     }
   });
 
