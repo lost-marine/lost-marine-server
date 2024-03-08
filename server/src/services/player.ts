@@ -1,11 +1,14 @@
 import "reflect-metadata";
 import { Service } from "typedi";
-import { Player } from "../classes/player";
+import { Player } from "@/classes/player";
 import { type PlayerResponse } from "@/types";
 
 @Service()
 export class PlayerService {
+  count: number;
+
   constructor() {
+    this.count = 0;
     global.playerList = new Map();
   }
 
@@ -19,9 +22,7 @@ export class PlayerService {
    */
   initPlayer(player: Player, socketId: string): Player {
     const nickname = player.nickname;
-    const count: number = global.playerList?.size + 1;
-    const myInfo = new Player(count, nickname, 100, 200, socketId);
-
+    const myInfo = new Player(++this.count, nickname, 100, 200, socketId);
     return myInfo;
   }
 
@@ -59,7 +60,7 @@ export class PlayerService {
    */
   addPlayer(player: Player, socketId: string): PlayerResponse {
     const myInfo = this.initPlayer(player, socketId);
-    global.playerList?.set(player.playerId, player);
+    global.playerList?.set(myInfo.playerId, myInfo);
     const playerList = this.getPlayerList();
 
     const result: PlayerResponse = {
