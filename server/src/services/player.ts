@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import Container, { Service } from "typedi";
 import { Player } from "@/classes/player";
-import { type PlayerResponse } from "@/types";
+import { type PlayerCrashRequest, type ValidateRespone, type PlayerResponse } from "@/types";
 import { MapService } from "./map";
 import { type Position } from "@/classes/position";
 
@@ -90,6 +90,57 @@ export class PlayerService {
     global.playerList?.set(playerId, item);
 
     return this.getPlayerList();
+  }
+
+  /** Description placeholder
+   * TODO: 성공 가능 여부 유효성 검증 필요
+   * @date 3/8/2024 - 10:51:45 AM
+   * @author 양소영
+   *
+   * @param {PlayerCrashRequest} data
+   * @returns {ValidateRespone}
+   */
+  isCrashValidate(data: PlayerCrashRequest): ValidateRespone {
+    let isSuccess: boolean = true;
+    let msg: string = "플레이어 충돌 검증 결과 성공했습니다";
+    const isCrashed: boolean = true;
+
+    // 플레이어 두 명이 playerList에 존재하는지 검증
+    if (global.playerList?.get(data.playerId) === undefined || global.playerList?.get(data.attackedPlayerId) === undefined) {
+      isSuccess = false;
+      msg = "플레이어가 존재하지 않습니다";
+    }
+    // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
+    if (isSuccess) {
+      if (!isCrashed) {
+        msg = "플레이어는 충돌 가능 영역에 존재하지않습니다.";
+      }
+    }
+
+    const response: ValidateRespone = {
+      isSuccess,
+      msg
+    };
+    return response;
+  }
+
+  /**
+   * 플레이어 간 공격 처리
+   * TODO: 두 명의 플레이어 중 누가 공격을 했는지 검증 필요
+   * @date 3/8/2024 - 11:20:37 AM
+   * @author 양소영
+   *
+   * @param {PlayerCrashRequest} data
+   * @returns {Player[]}
+   */
+  attackPlayer(data: PlayerCrashRequest): Player[] {
+    const attacker: Player = global.playerList?.get(data.playerId);
+    const defender: Player = global.playerList?.get(data.attackedPlayerId);
+
+    attacker.updateAttackerInfo();
+    defender.updateDefenderInfo(attacker);
+
+    return [attacker, defender];
   }
 
   /**

@@ -6,7 +6,14 @@ import { PlayerService } from "./services/player";
 import { type Player } from "./classes/player";
 import "reflect-metadata";
 import Container from "typedi";
-import { type GameStartData, type EnterValidateRespone, type PlayerResponse, type PlanktonEatResponse } from "./types";
+// import { type GameStartData, type EnterValidateRespone, type PlayerResponse, type PlanktonEatResponse } from "./types";
+import {
+  type PlayerCrashRequest,
+  type GameStartData,
+  type ValidateRespone,
+  type PlayerResponse,
+  type PlanktonEatResponse
+} from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
 
@@ -56,7 +63,7 @@ io.on("connection", (socket: Socket) => {
   socket.on("enter", (player: Player, callback) => {
     const isSuccess: boolean = playerService.validateNickName(player.nickname);
     const msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
-    const response: EnterValidateRespone = {
+    const response: ValidateRespone = {
       isSuccess,
       msg
     };
@@ -68,7 +75,7 @@ io.on("connection", (socket: Socket) => {
       const response: PlayerResponse = playerService.addPlayer(player, socket.id);
       const planktonList: Plankton[] = [...global.planktonList.values()];
       sendWithoutMe(socket, "enter", response.myInfo);
-      sendToMe(socket, "game-start", { ...response, planktonList } satisfies GameStartData);
+      sendToMe(socket.id, "game-start", { ...response, planktonList } satisfies GameStartData);
     }
   });
 
@@ -109,6 +116,27 @@ io.on("connection", (socket: Socket) => {
     }
   });
 
+  // 플레이어 간 공격
+  socket.on("player-crash", (data: PlayerCrashRequest, callback) => {
+    const validateResponse: ValidateRespone = playerService.isCrashValidate(data);
+    callback(validateResponse);
+
+    // 충돌 검증이 성공적인 경우만 공격 시도
+    if (validateResponse.isSuccess) {
+      const result: Player[] = playerService.attackPlayer(data);
+
+      // 플레이어 상태 정보 수정
+      result.forEach((player) => {
+        sendToMe(player.socketId, "player-status-sync", player);
+        if (player.isGameOver) {
+          sendToMe(player.socketId, "game-over", player);
+          sendWithoutMe(socket, "quit", player);
+          playerService.deletePlayerByPlayerId(player.playerId);
+        }
+      });
+    }
+  });
+
   // 플레이어 위치 싱크
   setInterval(() => {
     sendToAll(socket, "others-position-sync", playerService.getPlayerList());
@@ -137,8 +165,8 @@ function sendToAll(socket: Socket, event: string, data: any): void {
  * @param {string} event
  * @param {*} data
  */
-const sendToMe = (socket: Socket, event: string, data: any): void => {
-  io.to(socket.id).emit(event, data);
+const sendToMe = (socketId: string, event: string, data: any): void => {
+  io.to(socketId).emit(event, data);
 };
 
 /**
