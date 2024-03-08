@@ -89,6 +89,23 @@ export class PlayerService {
   }
 
   /**
+   * 플랑크톤 먹은 경우 먹은 갯수 갱신
+   * @date 3/8/2024 - 9:33:23 AM
+   * @author 양소영
+   *
+   * @param {number} playerId
+   * @param {number} planktonId
+   */
+  eatPlankton(playerId: number): Player {
+    const player: Player = global.playerList?.get(playerId);
+
+    if (player !== undefined) {
+      player.planktonCount++;
+    }
+    return player;
+  }
+
+  /**
    * 플레이어 아이디로 삭제
    * @date 3/7/2024 - 9:13:23 AM
    *
