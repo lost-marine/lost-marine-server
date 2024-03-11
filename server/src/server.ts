@@ -11,7 +11,9 @@ import {
   type GameStartData,
   type ValidateRespone,
   type PlayerResponse,
-  type PlanktonEatResponse
+  type PlanktonEatResponse,
+  type ChatMessageSendResponse,
+  type ChatMessageReceiveRequest
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -151,6 +153,32 @@ io.on("connection", (socket: Socket) => {
         }
       });
     }
+  });
+
+  socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
+    console.log("메세지를 수신 받았습니다.");
+    // TODO: 1. player ID가 현재 존재하고 있는지 확인하기
+    const check: boolean = global.playerList.has(data.playerId);
+    // TODO: 2. player아이디에서 player 닉네임 정보 갖고 오기.
+    const response: ValidateRespone = {
+      isSuccess: false,
+      msg: "존재하지 않는 플레이어입니다."
+    };
+
+    if (!check) {
+      callback(response);
+      return;
+    }
+
+    const playerNickname = global.playerList.get(data.playerId).nickname;
+    const sendFormat: ChatMessageReceiveRequest = {
+      playerId: data.playerId,
+      nickname: playerNickname,
+      timeStamp: Date.now(),
+      msg: data.msg
+    };
+
+    sendToAll("chat-message-receive", sendFormat);
   });
 });
 
