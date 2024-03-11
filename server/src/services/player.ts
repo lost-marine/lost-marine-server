@@ -48,8 +48,17 @@ export class PlayerService {
    */
   validateNickName(nickname: string): ValidateRespone {
     const regexp: RegExp = /^[가-힣A-Za-z0-9]{2,12}$/;
-    const isSuccess: boolean = regexp.test(nickname);
-    const msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
+    let isSuccess: boolean = regexp.test(nickname);
+    let msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
+    // 닉네임 중복 검사
+    if (isSuccess) {
+      global.playerList?.forEach((player) => {
+        if (player.nickname === nickname) {
+          isSuccess = false;
+          msg = "중복된 아이디입니다.";
+        }
+      });
+    }
 
     const response: ValidateRespone = {
       isSuccess,
