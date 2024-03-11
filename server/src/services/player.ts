@@ -1,10 +1,11 @@
 import "reflect-metadata";
 import Container, { Service } from "typedi";
 import { Player } from "@/classes/player";
-import { type PlayerCrashRequest, type ValidateRespone, type PlayerResponse } from "@/types";
+import { type PlayerCrashRequest, type ValidateRespone, type PlayerResponse, type Species } from "@/types";
 import { MapService } from "./map";
 import { type Position } from "@/classes/position";
 import { createBuilder } from "@/util/builder";
+import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 
 @Service()
 export class PlayerService {
@@ -65,6 +66,36 @@ export class PlayerService {
       msg
     };
 
+    return response;
+  }
+
+  /**
+   * 진화 검증 로직
+   * @date 3/11/2024 - 5:07:00 PM
+   * @author 양소영
+   *
+   * @param {Player} player
+   * @returns {ValidateRespone}
+   */
+  validateEvolution(player: Player): ValidateRespone {
+    let isSuccess: boolean = true;
+    const msg: string = "진화가 가능합니다";
+    const originPlayer: Player = global.playerList?.get(player.playerId);
+
+    const species: Species | undefined = SPECIES_ASSET.get(originPlayer.speciesId);
+    if (species !== undefined) {
+      const requirementPoint: number | undefined = TIER_ASSET.get(species?.tierCode);
+      // 진화요청 종 id가 진화가능한 종인지 검증 필요
+
+      // 필요 포인트 충족 여부 확인
+      if (requirementPoint === undefined || player.point < requirementPoint) {
+        isSuccess = false;
+      }
+    }
+    const response: ValidateRespone = {
+      isSuccess,
+      msg
+    };
     return response;
   }
 
