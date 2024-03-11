@@ -6,7 +6,6 @@ import { PlayerService } from "./services/player";
 import { type Player } from "./classes/player";
 import "reflect-metadata";
 import Container from "typedi";
-// import { type GameStartData, type EnterValidateRespone, type PlayerResponse, type PlanktonEatResponse } from "./types";
 import {
   type PlayerCrashRequest,
   type GameStartData,
@@ -22,6 +21,7 @@ const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
 const endpoint: string = "localhost";
 const app = express();
+const roomId: string = "room0";
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -32,6 +32,7 @@ app.use((req, res, next) => {
 });
 
 const httpServer = http.createServer(app);
+const playerService = Container.get<PlayerService>(PlayerService);
 
 const io = new Server(httpServer, {
   cors: {
@@ -49,12 +50,17 @@ app.get("/", (req: Request, res: Response) => {
   res.sendFile(fullPath);
 });
 
+// 플레이어 위치 싱크
+setInterval(() => {
+  sendToAll("others-position-sync", playerService.getPlayerList());
+}, 20000);
+
+
 Container.set("width", 2688);
 Container.set("height", 1536);
 Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
 
 io.on("connection", (socket: Socket) => {
-  const playerService = Container.get<PlayerService>(PlayerService);
   const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
   if (global.playerList?.size === 0) {
@@ -74,6 +80,8 @@ io.on("connection", (socket: Socket) => {
     // 닉네임 검증
     if (isSuccess) {
       // 성공한 경우에만 플레이어 추가
+      void socket.join(roomId);
+      console.log("룸에 들어오게 처리함");
       const response: PlayerResponse = playerService.addPlayer(player, socket.id);
       const planktonList: Plankton[] = [...global.planktonList.values()];
       sendWithoutMe(socket, "enter", response.myInfo);
@@ -114,7 +122,7 @@ io.on("connection", (socket: Socket) => {
 
     if (planktonManager.eatedPlanktonCnt > 2) {
       // respone을 위한 플랑크톤 개수 조절이 필요합니다.
-      sendToAll(socket, "plankton-respawn", planktonManager.spawnPlankton());
+      sendToAll("plankton-respawn", planktonManager.spawnPlankton());
     }
   });
 
@@ -138,11 +146,6 @@ io.on("connection", (socket: Socket) => {
       });
     }
   });
-
-  // 플레이어 위치 싱크
-  setInterval(() => {
-    sendToAll(socket, "others-position-sync", playerService.getPlayerList());
-  }, 20000);
 });
 
 /**
@@ -154,9 +157,9 @@ io.on("connection", (socket: Socket) => {
  * @param {string} event
  * @param {*} data
  */
-function sendToAll(socket: Socket, event: string, data: any): void {
-  socket.emit(event, data);
-}
+const sendToAll = (event: string, data: any): void => {
+  io.to(roomId).emit(event, data);
+};
 
 /**
  * 자신에게만 보내줌
@@ -181,7 +184,7 @@ const sendToMe = (socketId: string, event: string, data: any): void => {
  * @param {*} data
  */
 const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
-  socket.broadcast.emit(event, data);
+  socket.to(roomId).except(socket.id).emit(event, data);
 };
 
 httpServer.listen(port, () => {
