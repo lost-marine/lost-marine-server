@@ -9,4 +9,5 @@ export class Creature {
   power: number = 0;
   status: number = 0;
   isFlipX: boolean;
+  speciesId: number;
 }

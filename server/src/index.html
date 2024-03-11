@@ -81,7 +81,7 @@
       nickname: input.value
     };
 
-    socket.emit("enter", test, (response) => {
+    socket.emit("player-enter", test, (response) => {
       console.log(response);
     });
   });

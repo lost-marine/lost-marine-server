@@ -19,15 +19,7 @@ export class Player extends Creature {
   socketId: string = "";
   isFlipX: boolean = false;
   isGameOver: boolean = false;
-
-  constructor(playerId: number, nickname: string, startX: number, startY: number, socketId: string) {
-    super();
-    this.playerId = playerId;
-    this.nickname = nickname;
-    this.startX = startX;
-    this.startY = startY;
-    this.socketId = socketId;
-  }
+  speciesId: number = 0;
 
   /**
    * 플레이어 위치 정보 갱신
@@ -66,3 +58,25 @@ export class Player extends Creature {
     this.isGameOver = this.health <= 0;
   }
 }
+
+export type TPlayer = {
+  startX: number;
+  startY: number;
+  direction: number;
+  health: number;
+  type: number;
+  power: number;
+  status: number;
+  playerId: number;
+  nickname: string;
+  planktonCount: number;
+  microplasticCount: number;
+  playerCount: number;
+  stopTime: number;
+  level: number;
+  point: number;
+  socketId: string;
+  isFlipX: boolean;
+  isGameOver: boolean;
+  speciesId: number;
+};

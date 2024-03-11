@@ -4,6 +4,7 @@ import { Player } from "@/classes/player";
 import { type PlayerCrashRequest, type ValidateRespone, type PlayerResponse } from "@/types";
 import { MapService } from "./map";
 import { type Position } from "@/classes/position";
+import { createBuilder } from "@/util/builder";
 
 @Service()
 export class PlayerService {
@@ -26,7 +27,15 @@ export class PlayerService {
     const mapService = Container.get<MapService>(MapService);
     const pos: Position = mapService.getSpawnablePosition(0);
     const nickname = player.nickname;
-    const myInfo = new Player(++this.count, nickname, pos.x, pos.y, socketId);
+    const myInfo: Player = createBuilder(Player)
+      .setPlayerId(this.count++)
+      .setNickname(nickname)
+      .setStartX(pos.x)
+      .setStartY(pos.y)
+      .setSocketId(socketId)
+      .setSpeciesId(player.speciesId)
+      .build();
+    console.log(myInfo);
     return myInfo;
   }
 
@@ -37,10 +46,26 @@ export class PlayerService {
    * @param {string} nickname
    * @returns {boolean}
    */
-  validateNickName(nickname: string): boolean {
+  validateNickName(nickname: string): ValidateRespone {
     const regexp: RegExp = /^[가-힣A-Za-z0-9]{2,12}$/;
-    const result: boolean = regexp.test(nickname);
-    return result;
+    let isSuccess: boolean = regexp.test(nickname);
+    let msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
+    // 닉네임 중복 검사
+    if (isSuccess) {
+      global.playerList?.forEach((player) => {
+        if (player.nickname === nickname) {
+          isSuccess = false;
+          msg = "중복된 아이디입니다.";
+        }
+      });
+    }
+
+    const response: ValidateRespone = {
+      isSuccess,
+      msg
+    };
+
+    return response;
   }
 
   /**
