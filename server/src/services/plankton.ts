@@ -102,12 +102,13 @@ export class PlanktonService {
    */
   spawnPlankton(): Plankton[] {
     const responedPlankton: Plankton[] = [];
+    const mapService = Container.get<MapService>(MapService);
 
     for (let i = this.eatedPlanktonCnt; i > 0; i--) {
-      const position: number[] = getSpawnablePosition(2);
+      const position: Position = mapService.getSpawnablePosition(1);
       const plankton: Plankton = createBuilder(Plankton)
-        .setStartX(position[0])
-        .setStartY(position[1])
+        .setStartX(position.x)
+        .setStartY(position.y)
         .setPlanktonId(this.idCounter)
         .build();
 
