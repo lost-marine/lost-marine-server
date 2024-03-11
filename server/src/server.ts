@@ -6,7 +6,6 @@ import { PlayerService } from "./services/player";
 import { type Player } from "./classes/player";
 import "reflect-metadata";
 import Container from "typedi";
-// import { type GameStartData, type EnterValidateRespone, type PlayerResponse, type PlanktonEatResponse } from "./types";
 import {
   type PlayerCrashRequest,
   type GameStartData,
@@ -21,6 +20,7 @@ const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
 const endpoint: string = "localhost";
 const app = express();
+const roomId: string = "room0";
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -72,6 +72,8 @@ io.on("connection", (socket: Socket) => {
     // 닉네임 검증
     if (isSuccess) {
       // 성공한 경우에만 플레이어 추가
+      void socket.join(roomId);
+      console.log("룸에 들어오게 처리함");
       const response: PlayerResponse = playerService.addPlayer(player, socket.id);
       const planktonList: Plankton[] = [...global.planktonList.values()];
       sendWithoutMe(socket, "enter", response.myInfo);
@@ -153,7 +155,7 @@ io.on("connection", (socket: Socket) => {
  * @param {*} data
  */
 function sendToAll(socket: Socket, event: string, data: any): void {
-  socket.emit(event, data);
+  socket.to(roomId).emit(event, data);
 }
 
 /**
@@ -179,7 +181,7 @@ const sendToMe = (socketId: string, event: string, data: any): void => {
  * @param {*} data
  */
 const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
-  socket.broadcast.emit(event, data);
+  socket.to(roomId).except(socket.id).emit(event, data);
 };
 
 httpServer.listen(port, () => {
