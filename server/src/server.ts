@@ -55,7 +55,6 @@ setInterval(() => {
   sendToAll("others-position-sync", playerService.getPlayerList());
 }, 20000);
 
-
 Container.set("width", 2688);
 Container.set("height", 1536);
 Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
@@ -67,24 +66,25 @@ io.on("connection", (socket: Socket) => {
     planktonManager.initPlankton();
   }
 
+  // 닉네임 확인
+  socket.on("nickname-validate", (player: Player, callback) => {
+    const validateResponse: ValidateRespone = playerService.validateNickName(player.nickname);
+    callback(validateResponse);
+  });
+
   // 참가자 본인 입장(소켓 연결)
-  socket.on("enter", (player: Player, callback) => {
-    const isSuccess: boolean = playerService.validateNickName(player.nickname);
-    const msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
-    const response: ValidateRespone = {
-      isSuccess,
-      msg
-    };
-    callback(response);
+  socket.on("player-enter", (player: Player, callback) => {
+    const validateResponse: ValidateRespone = playerService.validateNickName(player.nickname);
+    callback(validateResponse);
 
     // 닉네임 검증
-    if (isSuccess) {
+    if (validateResponse.isSuccess) {
       // 성공한 경우에만 플레이어 추가
       void socket.join(roomId);
       console.log("룸에 들어오게 처리함");
       const response: PlayerResponse = playerService.addPlayer(player, socket.id);
       const planktonList: Plankton[] = [...global.planktonList.values()];
-      sendWithoutMe(socket, "enter", response.myInfo);
+      sendWithoutMe(socket, "player-enter", response.myInfo);
       sendToMe(socket.id, "game-start", { ...response, planktonList } satisfies GameStartData);
     }
   });
