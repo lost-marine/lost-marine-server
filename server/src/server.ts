@@ -89,6 +89,12 @@ io.on("connection", (socket: Socket) => {
     }
   });
 
+  // 진화요청(Client→ Server)
+  socket.on("player-evolution", (player: Player, callback) => {
+    const validateResponse: ValidateRespone = playerService.validateEvolution(player);
+    callback(validateResponse);
+  });
+
   // game start
 
   // 플레이어 본인 위치 전송

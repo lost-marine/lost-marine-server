@@ -24,3 +24,20 @@ export type PlanktonEatResponse = {
   isSuccess: boolean;
   player?: Player;
 };
+
+export type Species = {
+  speciesId: number;
+  name: string;
+  imgUrl: string;
+  width: number;
+  height: number;
+  power: number;
+  health: number;
+  evolutionList: number[];
+  tierCode: number;
+};
+
+export type Tier = {
+  tierCode: number;
+  requirementPoint: number;
+};
