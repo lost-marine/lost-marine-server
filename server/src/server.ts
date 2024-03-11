@@ -31,6 +31,7 @@ app.use((req, res, next) => {
 });
 
 const httpServer = http.createServer(app);
+const playerService = Container.get<PlayerService>(PlayerService);
 
 const io = new Server(httpServer, {
   cors: {
@@ -48,8 +49,12 @@ app.get("/", (req: Request, res: Response) => {
   res.sendFile(fullPath);
 });
 
+// 플레이어 위치 싱크
+setInterval(() => {
+  sendToAll("others-position-sync", playerService.getPlayerList());
+}, 20000);
+
 io.on("connection", (socket: Socket) => {
-  const playerService = Container.get<PlayerService>(PlayerService);
   Container.set("width", 2688);
   Container.set("height", 1536);
   Container.set("planktonCnt", 50);
@@ -114,7 +119,7 @@ io.on("connection", (socket: Socket) => {
 
     if (planktonManager.eatedPlanktonCnt > 2) {
       // respone을 위한 플랑크톤 개수 조절이 필요합니다.
-      sendToAll(socket, "plankton-respawn", planktonManager.spawnPlankton());
+      sendToAll("plankton-respawn", planktonManager.spawnPlankton());
     }
   });
 
@@ -138,11 +143,6 @@ io.on("connection", (socket: Socket) => {
       });
     }
   });
-
-  // 플레이어 위치 싱크
-  setInterval(() => {
-    sendToAll(socket, "others-position-sync", playerService.getPlayerList());
-  }, 20000);
 });
 
 /**
@@ -154,9 +154,9 @@ io.on("connection", (socket: Socket) => {
  * @param {string} event
  * @param {*} data
  */
-function sendToAll(socket: Socket, event: string, data: any): void {
-  socket.to(roomId).emit(event, data);
-}
+const sendToAll = (event: string, data: any): void => {
+  io.to(roomId).emit(event, data);
+};
 
 /**
  * 자신에게만 보내줌
