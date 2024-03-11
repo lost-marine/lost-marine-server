@@ -1,11 +1,12 @@
 import { Plankton } from "@/classes/plankton";
 import RBush from "rbush";
-import { getSpawnablePosition } from "@/util/map";
 import { createBuilder } from "@/util/builder";
 import { Inject, Service, Container } from "typedi";
 import "reflect-metadata";
 import { PlayerService } from "./player";
 import { type PlanktonEatResponse } from "@/types";
+import { type Position } from "@/classes/position";
+import { MapService } from "./map";
 
 @Service()
 export class PlanktonService {
@@ -47,11 +48,13 @@ export class PlanktonService {
     this.idCounter = 1;
     this.eatedPlanktonCnt = 0;
 
+    const mapService = Container.get<MapService>(MapService);
+
     for (let i = 0; i < this.planktonCnt; i++) {
-      const position: number[] = getSpawnablePosition(2);
+      const position: Position = mapService.getSpawnablePosition(1);
       const plankton: Plankton = createBuilder(Plankton)
-        .setStartX(position[0])
-        .setStartY(position[1])
+        .setStartX(position.x)
+        .setStartY(position.y)
         .setPlanktonId(this.idCounter)
         .build();
 
