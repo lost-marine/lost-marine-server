@@ -11,7 +11,7 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       height: 300,
       power: 10,
       health: 100,
-      evolutionList: [2, 3],
+      evolutionList: new Set([2, 3]),
       tierCode: 1
     }
   ]
