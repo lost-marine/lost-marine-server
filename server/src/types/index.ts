@@ -41,3 +41,13 @@ export type Tier = {
   tierCode: number;
   requirementPoint: number;
 };
+
+export type ChatMessageSendResponse = {
+  playerId: number;
+  msg: string;
+};
+
+export type ChatMessageReceiveRequest = {
+  nickname: string;
+  timeStamp: number;
+} & ChatMessageSendResponse;
