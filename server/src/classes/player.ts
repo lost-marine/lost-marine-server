@@ -1,8 +1,6 @@
 import { Creature } from "@/classes/creature";
 
 export class Player extends Creature {
-  startX: number = 0;
-  startY: number = 0;
   direction: number = 2;
   health: number = 100;
   type: number = 1;
@@ -30,8 +28,8 @@ export class Player extends Creature {
    */
   updatePlayerInfo(player: Player): void {
     this.direction = player.direction;
-    this.startX = player.startX;
-    this.startY = player.startY;
+    this.centerX = player.centerX;
+    this.centerY = player.centerY;
     this.isFlipX = player.isFlipX;
   }
 

@@ -31,8 +31,8 @@ export class PlayerService {
     const myInfo: Player = createBuilder(Player)
       .setPlayerId(this.count++)
       .setNickname(nickname)
-      .setStartX(pos.x)
-      .setStartY(pos.y)
+      .setCenterX(pos.x)
+      .setCenterY(pos.y)
       .setSocketId(socketId)
       .setSpeciesId(player.speciesId)
       .build();
