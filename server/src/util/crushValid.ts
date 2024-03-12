@@ -11,18 +11,15 @@ import { Bodies, Bounds } from "matter-js";
  * @returns {boolean}
  */
 export function validateCanCrushArea(area1: area, area2: area): boolean {
-  if (area1.direction !== -1 && area2.direction !== -1) {
-    return crushCreatureAndCreature(area1, area2);
-  }
-
-  if (area1.direction !== -1 && area2.direction === -1) {
-    return crushCreatureAndFlankton(area1, area2);
-  }
-
-  if (area1.direction === -1 && area2.direction === -1) {
+  if (area1.direction !== -1) {
+    if (area2.direction !== -1) {
+      return crushCreatureAndCreature(area1, area2);
+    } else {
+      return crushCreatureAndFlankton(area1, area2);
+    }
+  } else {
     return crushCreatureAndFlankton(area2, area1);
   }
-  return false;
 }
 
 /**
