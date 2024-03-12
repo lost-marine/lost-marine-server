@@ -79,17 +79,22 @@ export class PlayerService {
    */
   validateEvolution(player: Player): ValidateRespone {
     let isSuccess: boolean = true;
-    const msg: string = "진화가 가능합니다";
+    let msg: string = "진화가 가능합니다";
     const originPlayer: Player = global.playerList?.get(player.playerId);
 
     const species: Species | undefined = SPECIES_ASSET.get(originPlayer.speciesId);
     if (species !== undefined) {
       const requirementPoint: number | undefined = TIER_ASSET.get(species?.tierCode);
       // 진화요청 종 id가 진화가능한 종인지 검증 필요
-
-      // 필요 포인트 충족 여부 확인
-      if (requirementPoint === undefined || player.point < requirementPoint) {
+      if (species.evolutionList.has(player.speciesId)) {
         isSuccess = false;
+        msg = "진화가 불가능한 개체입니다";
+
+        // 필요 포인트 충족 여부 확인
+        if (requirementPoint === undefined || player.point < requirementPoint) {
+          isSuccess = false;
+          msg = "필요 경험치를 만족하지 못했습니다";
+        }
       }
     }
     const response: ValidateRespone = {
