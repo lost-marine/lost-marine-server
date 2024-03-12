@@ -156,10 +156,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
-    console.log("메세지를 수신 받았습니다.");
-    // TODO: 1. player ID가 현재 존재하고 있는지 확인하기
     const check: boolean = global.playerList.has(data.playerId);
-    // TODO: 2. player아이디에서 player 닉네임 정보 갖고 오기.
     const response: ValidateRespone = {
       isSuccess: false,
       msg: "존재하지 않는 플레이어입니다."
