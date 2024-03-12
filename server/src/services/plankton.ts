@@ -53,8 +53,8 @@ export class PlanktonService {
     for (let i = 0; i < this.planktonCnt; i++) {
       const position: Position = mapService.getSpawnablePosition(1);
       const plankton: Plankton = createBuilder(Plankton)
-        .setStartX(position.x)
-        .setStartY(position.y)
+        .setCenterX(position.x)
+        .setCenterY(position.y)
         .setPlanktonId(this.idCounter)
         .build();
 
@@ -107,8 +107,8 @@ export class PlanktonService {
     for (let i = this.eatedPlanktonCnt; i > 0; i--) {
       const position: Position = mapService.getSpawnablePosition(1);
       const plankton: Plankton = createBuilder(Plankton)
-        .setStartX(position.x)
-        .setStartY(position.y)
+        .setCenterX(position.x)
+        .setCenterY(position.y)
         .setPlanktonId(this.idCounter)
         .build();
 
