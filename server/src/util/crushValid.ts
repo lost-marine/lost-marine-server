@@ -1,16 +1,17 @@
-import { type area } from "@/classes/area";
-import { Bodies, Bounds } from "matter-js";
+import { type Area } from "@/classes/area";
+import matter from "matter-js";
+const { Bodies, Bounds } = matter;
 
 /**
  * 영역이 서로 겹치는지 아닌지 확인합니다.
  * @date 3/12/2024 - 3:57:27 PM
  * @author 박연서
  *
- * @param {area} area1
- * @param {area} area2
+ * @param {Area} area1
+ * @param {Area} area2
  * @returns {boolean}
  */
-export function validateCanCrushArea(area1: area, area2: area): boolean {
+export function validateCanCrushArea(area1: Area, area2: Area): boolean {
   if (area1.direction !== -1) {
     if (area2.direction !== -1) {
       return crushCreatureAndCreature(area1, area2);
@@ -27,11 +28,11 @@ export function validateCanCrushArea(area1: area, area2: area): boolean {
  * @date 3/12/2024 - 5:45:37 PM
  * @author 박연서
  *
- * @param {area} area1
- * @param {area} area2
+ * @param {Area} area1
+ * @param {Area} area2
  * @returns {boolean}
  */
-function crushCreatureAndFlankton(area1: area, area2: area): boolean {
+function crushCreatureAndFlankton(area1: Area, area2: Area): boolean {
   const rectangleFromArea1 = Bodies.rectangle(area1.centerX, area1.centerY, area1.width + 5, area1.height + 5, {
     angle: (area1.direction * 45 * Math.PI) / 180
   }).bounds;
@@ -45,11 +46,11 @@ function crushCreatureAndFlankton(area1: area, area2: area): boolean {
  * @date 3/12/2024 - 5:46:52 PM
  * @author 박연서
  *
- * @param {area} area1
- * @param {area} area2
+ * @param {Area} area1
+ * @param {Area} area2
  * @returns {boolean}
  */
-function crushCreatureAndCreature(area1: area, area2: area): boolean {
+function crushCreatureAndCreature(area1: Area, area2: Area): boolean {
   const rectangleFromArea1 = Bodies.rectangle(area1.centerX, area1.centerY, area1.width + 5, area1.height + 5, {
     angle: (area1.direction * 45 * Math.PI) / 180
   }).bounds;

@@ -1,4 +1,4 @@
-export class area {
+export class Area {
   centerX: number;
   centerY: number;
   direction: number = -1;
