@@ -6,7 +6,7 @@ export class Player extends Creature {
   direction: number = 2;
   health: number = 100;
   type: number = 1;
-  power: number = 1;
+  power: number = 10;
   status: number = 1;
   playerId: number = 0;
   nickname: string = "";

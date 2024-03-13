@@ -89,8 +89,8 @@
   exit.addEventListener("click", function (e) {
     e.preventDefault();
     var data = {
-      playerId: 1,
-      attackedPlayerId: 2
+      playerAId: 1,
+      playerBId: 2
     };
     socket.emit("player-crash", data, (response) => {
       console.log(response);

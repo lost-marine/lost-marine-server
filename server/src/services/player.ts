@@ -1,7 +1,14 @@
 import "reflect-metadata";
 import Container, { Service } from "typedi";
 import { Player } from "@/classes/player";
-import { type PlayerCrashRequest, type ValidateRespone, type PlayerResponse, type Species } from "@/types";
+import {
+  type PlayerCrashRequest,
+  type ValidateRespone,
+  type PlayerResponse,
+  type Species,
+  type PlayerAttackResponse,
+  type plyaerGameOverResponse
+} from "@/types";
 import { MapService } from "./map";
 import { type Position } from "@/classes/position";
 import { createBuilder } from "@/util/builder";
@@ -162,20 +169,21 @@ export class PlayerService {
    * @param {PlayerCrashRequest} data
    * @returns {ValidateRespone}
    */
-  isCrashValidate(data: PlayerCrashRequest): ValidateRespone {
+  isCrashValidate(request: PlayerCrashRequest): ValidateRespone {
     let isSuccess: boolean = true;
     let msg: string = "플레이어 충돌 검증 결과 성공했습니다";
 
+    console.log(request.playerAId + " " + request.playerBId);
+
     // 플레이어 두 명이 playerList에 존재하는지 검증
-    if (global.playerList.get(data.playerId) === undefined || global.playerList.get(data.attackedPlayerId) === undefined) {
+    if (global.playerList.get(request.playerAId) === undefined || global.playerList.get(request.playerBId) === undefined) {
       isSuccess = false;
       msg = "플레이어가 존재하지 않습니다";
     }
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
     if (isSuccess) {
-      const firstPlayer: Player = global.playerList.get(data.playerId);
-      const secondPlayer: Player = global.playerList.get(data.attackedPlayerId);
-
+      const firstPlayer: Player = global.playerList.get(request.playerAId);
+      const secondPlayer: Player = global.playerList.get(request.playerBId);
       if (!validateCanCrushArea(firstPlayer.playerToArea(), secondPlayer.playerToArea())) {
         msg = "플레이어는 충돌 가능 영역에 존재하지 않습니다.";
       }
@@ -193,14 +201,56 @@ export class PlayerService {
    * @param {PlayerCrashRequest} data
    * @returns {Player[]}
    */
-  attackPlayer(data: PlayerCrashRequest): Player[] {
-    const attacker: Player = global.playerList?.get(data.playerId);
-    const defender: Player = global.playerList?.get(data.attackedPlayerId);
+  attackPlayer(request: PlayerCrashRequest): PlayerAttackResponse[] {
+    const playerA: Player = global.playerList.get(request.playerAId);
+    const playerB: Player = global.playerList.get(request.playerBId);
 
-    attacker.updateAttackerInfo();
-    defender.updateDefenderInfo(attacker);
+    playerA.updateAttackerInfo();
+    playerB.updateDefenderInfo(playerA);
+
+    const attacker: PlayerAttackResponse = {
+      playerId: playerA.playerId,
+      health: playerA.health,
+      point: playerA.point,
+      centerX: playerA.centerX,
+      centerY: playerA.centerY,
+      isGameOver: playerA.isGameOver,
+      socketId: playerA.socketId
+    };
+
+    const defender: PlayerAttackResponse = {
+      playerId: playerB.playerId,
+      health: playerB.health,
+      point: playerB.point,
+      centerX: playerB.centerX,
+      centerY: playerB.centerY,
+      isGameOver: playerB.isGameOver,
+      socketId: playerB.socketId
+    };
 
     return [attacker, defender];
+  }
+
+  /**
+   * 게임 오버인 경우의 반환값 생성
+   * @date 3/13/2024 - 3:28:46 PM
+   * @author 양소영
+   *
+   * @param {PlayerAttackResponse} player
+   * @returns {plyaerGameOverResponse}
+   */
+  getGameOver(player: PlayerAttackResponse): plyaerGameOverResponse {
+    const gameoverPlayer: Player = global.playerList.get(player.playerId);
+
+    const response: plyaerGameOverResponse = {
+      playerId: gameoverPlayer.playerId,
+      planktonCount: gameoverPlayer.planktonCount,
+      microplasticCount: gameoverPlayer.microplasticCount,
+      playerCount: gameoverPlayer.playerCount,
+      point: gameoverPlayer.point
+    };
+
+    return response;
   }
 
   /**
