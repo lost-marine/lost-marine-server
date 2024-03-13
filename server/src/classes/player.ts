@@ -65,6 +65,7 @@ export class Player extends Creature {
     this.power = targetSpecies.power;
     this.width = targetSpecies.width;
     this.height = targetSpecies.height;
+    this.health = targetSpecies.health;
   }
 
   /**
