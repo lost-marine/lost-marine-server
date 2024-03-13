@@ -6,6 +6,7 @@ import { MapService } from "./map";
 import { type Position } from "@/classes/position";
 import { createBuilder } from "@/util/builder";
 import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
+import { validateCanCrushArea } from "@/util/crushValid";
 
 @Service()
 export class PlayerService {
@@ -164,25 +165,23 @@ export class PlayerService {
   isCrashValidate(data: PlayerCrashRequest): ValidateRespone {
     let isSuccess: boolean = true;
     let msg: string = "플레이어 충돌 검증 결과 성공했습니다";
-    const isCrashed: boolean = true;
 
     // 플레이어 두 명이 playerList에 존재하는지 검증
-    if (global.playerList?.get(data.playerId) === undefined || global.playerList?.get(data.attackedPlayerId) === undefined) {
+    if (global.playerList.get(data.playerId) === undefined || global.playerList.get(data.attackedPlayerId) === undefined) {
       isSuccess = false;
       msg = "플레이어가 존재하지 않습니다";
     }
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
     if (isSuccess) {
-      if (!isCrashed) {
-        msg = "플레이어는 충돌 가능 영역에 존재하지않습니다.";
+      const firstPlayer: Player = global.playerList.get(data.playerId);
+      const secondPlayer: Player = global.playerList.get(data.attackedPlayerId);
+
+      if (!validateCanCrushArea(firstPlayer.playerToArea(), secondPlayer.playerToArea())) {
+        msg = "플레이어는 충돌 가능 영역에 존재하지 않습니다.";
       }
     }
 
-    const response: ValidateRespone = {
-      isSuccess,
-      msg
-    };
-    return response;
+    return { isSuccess, msg };
   }
 
   /**

@@ -1,4 +1,6 @@
 import { Creature } from "@/classes/creature";
+import { createBuilder } from "@/util/builder";
+import { Area } from "./area";
 
 export class Player extends Creature {
   direction: number = 2;
@@ -55,26 +57,22 @@ export class Player extends Creature {
     this.health -= attacker.power;
     this.isGameOver = this.health <= 0;
   }
-}
 
-export type TPlayer = {
-  startX: number;
-  startY: number;
-  direction: number;
-  health: number;
-  type: number;
-  power: number;
-  status: number;
-  playerId: number;
-  nickname: string;
-  planktonCount: number;
-  microplasticCount: number;
-  playerCount: number;
-  stopTime: number;
-  level: number;
-  point: number;
-  socketId: string;
-  isFlipX: boolean;
-  isGameOver: boolean;
-  speciesId: number;
-};
+  /**
+   * Player를 Area로 바꿔줍니다
+   * @date 3/13/2024 - 10:47:44 AM
+   * @author 양소영
+   *
+   * @returns {area}
+   */
+  playerToArea(): Area {
+    const playterArea: Area = createBuilder(Area)
+      .setCenterX(this.centerX)
+      .setCenterY(this.centerY)
+      .setWidth(this.width)
+      .setHeight(this.height)
+      .setDirection(this.direction)
+      .build();
+    return playterArea;
+  }
+}

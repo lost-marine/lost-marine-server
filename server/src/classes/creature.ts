@@ -1,6 +1,6 @@
-import { area } from "./area";
+import { Area } from "./area";
 
-export class Creature extends area {
+export class Creature extends Area {
   width: number = 0;
   height: number = 0;
   health: number = 0;
