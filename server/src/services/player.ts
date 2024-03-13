@@ -6,7 +6,8 @@ import {
   type ValidateRespone,
   type PlayerResponse,
   type PlayerAttackResponse,
-  type plyaerGameOverResponse
+  type plyaerGameOverResponse,
+  type Species
 } from "@/types";
 import { MapService } from "./map";
 import { type Position } from "@/classes/position";
@@ -14,6 +15,7 @@ import { createBuilder } from "@/util/builder";
 // import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 import { validateCanCrushArea } from "@/util/crushValid";
 import { evolutionHandler } from "@/util/evolutionHandler";
+import { SPECIES_ASSET } from "@/constants/asset";
 
 @Service()
 export class PlayerService {
@@ -97,6 +99,13 @@ export class PlayerService {
       isSuccess: true,
       msg: "진화가 가능합니다."
     };
+  }
+
+  playerEvolution(targetSpeciesId: number, player: Player): void {
+    const targetSpecies: Species | undefined = SPECIES_ASSET.get(targetSpeciesId);
+    if (targetSpecies !== undefined) {
+      player.evolutePlayer(targetSpecies);
+    }
   }
 
   /**
