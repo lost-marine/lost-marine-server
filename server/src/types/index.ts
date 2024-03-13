@@ -33,7 +33,7 @@ export type Species = {
   height: number;
   power: number;
   health: number;
-  evolutionList: Set<number>;
+  evolutionSet: Set<number>;
   tierCode: number;
 };
 
