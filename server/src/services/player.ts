@@ -5,15 +5,15 @@ import {
   type PlayerCrashRequest,
   type ValidateRespone,
   type PlayerResponse,
-  type Species,
   type PlayerAttackResponse,
   type plyaerGameOverResponse
 } from "@/types";
 import { MapService } from "./map";
 import { type Position } from "@/classes/position";
 import { createBuilder } from "@/util/builder";
-import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
+// import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 import { validateCanCrushArea } from "@/util/crushValid";
+import { evolutionHandler } from "@/util/evolutionHandler";
 
 @Service()
 export class PlayerService {
@@ -78,38 +78,25 @@ export class PlayerService {
   }
 
   /**
-   * 진화 검증 로직
-   * @date 3/11/2024 - 5:07:00 PM
-   * @author 양소영
+   * 진화 가능한지 아닌지 확인합니다.
+   * 각각의 rule을 돌며 모든 검증이 완료된 경우에만, isSuccess: true를 반환합니다.
+   * @date 3/13/2024 - 3:40:15 PM
+   * @author 박연서
    *
+   * @param {number} targetSpeciesId
    * @param {Player} player
    * @returns {ValidateRespone}
    */
-  validateEvolution(player: Player): ValidateRespone {
-    let isSuccess: boolean = true;
-    let msg: string = "진화가 가능합니다";
-    const originPlayer: Player = global.playerList?.get(player.playerId);
-
-    const species: Species | undefined = SPECIES_ASSET.get(originPlayer.speciesId);
-    if (species !== undefined) {
-      const requirementPoint: number | undefined = TIER_ASSET.get(species?.tierCode);
-      // 진화요청 종 id가 진화가능한 종인지 검증 필요
-      if (species.evolutionList.has(player.speciesId)) {
-        isSuccess = false;
-        msg = "진화가 불가능한 개체입니다";
-
-        // 필요 포인트 충족 여부 확인
-        if (requirementPoint === undefined || player.point < requirementPoint) {
-          isSuccess = false;
-          msg = "필요 경험치를 만족하지 못했습니다";
-        }
+  validateEvolution(targetSpeciesId: number, player: Player): ValidateRespone {
+    for (const rule of evolutionHandler.rules) {
+      if (!rule.match(targetSpeciesId, player)) {
+        return rule.action(targetSpeciesId, player);
       }
     }
-    const response: ValidateRespone = {
-      isSuccess,
-      msg
+    return {
+      isSuccess: true,
+      msg: "진화가 가능합니다."
     };
-    return response;
   }
 
   /**
