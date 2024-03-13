@@ -3,6 +3,7 @@ import { createBuilder } from "@/util/builder";
 import { Area } from "./area";
 
 export class Player extends Creature {
+  [x: string]: any;
   direction: number = 2;
   health: number = 100;
   type: number = 1;
