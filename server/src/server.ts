@@ -13,7 +13,8 @@ import {
   type PlayerResponse,
   type PlanktonEatResponse,
   type ChatMessageSendResponse,
-  type ChatMessageReceiveRequest
+  type ChatMessageReceiveRequest,
+  type PlayerAttackResponse
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -141,14 +142,18 @@ io.on("connection", (socket: Socket) => {
 
     // 충돌 검증이 성공적인 경우만 공격 시도
     if (validateResponse.isSuccess) {
-      const result: Player[] = playerService.attackPlayer(data);
+      const result: PlayerAttackResponse[] = playerService.attackPlayer(data);
 
       // 플레이어 상태 정보 수정
       result.forEach((player) => {
-        sendToMe(player.socketId, "player-status-sync", player);
+        const mySocketId: string = player.socketId;
+        const { socketId, ...playerResponse } = player;
+        sendToMe(mySocketId, "player-status-sync", playerResponse);
+
+        // 게임 오버인 경우
         if (player.isGameOver) {
-          sendToMe(player.socketId, "game-over", player);
-          sendWithoutMe(socket, "quit", player);
+          sendToMe(player.socketId, "game-over", playerService.getGameOver(player));
+          sendWithoutMe(socket, "player-quit", player.playerId);
           playerService.deletePlayerByPlayerId(player.playerId);
         }
       });

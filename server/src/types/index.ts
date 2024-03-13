@@ -12,9 +12,13 @@ export type ValidateRespone = {
 };
 
 export type PlayerCrashRequest = {
-  playerId: number;
-  attackedPlayerId: number;
+  playerAId: number;
+  playerBId: number;
 };
+
+export type PlayerAttack = Pick<Player, "playerId" | "health" | "point" | "centerX" | "centerY" | "isGameOver">;
+export type PlayerAttackResponse = PlayerAttack & { socketId: string };
+export type plyaerGameOverResponse = Pick<Player, "playerId" | "planktonCount" | "microplasticCount" | "playerCount" | "point">;
 
 export type GameStartData = {
   planktonList: Plankton[];
