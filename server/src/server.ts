@@ -177,7 +177,7 @@ io.on("connection", (socket: Socket) => {
 
     const playerNickname = global.playerList.get(data.playerId).nickname;
     const sendFormat: ChatMessageReceiveRequest = {
-      speciesName: targetSpecies.name,
+      speciesname: targetSpecies.name,
       playerId: data.playerId,
       nickname: playerNickname,
       timeStamp: Date.now(),

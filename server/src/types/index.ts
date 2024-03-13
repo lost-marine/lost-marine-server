@@ -52,7 +52,7 @@ export type ChatMessageSendResponse = {
 };
 
 export type ChatMessageReceiveRequest = {
-  speciesName: string;
+  speciesname: string;
   nickname: string;
   timeStamp: number;
 } & ChatMessageSendResponse;
