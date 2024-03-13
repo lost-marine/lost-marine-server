@@ -14,11 +14,13 @@ import {
   type PlanktonEatResponse,
   type ChatMessageSendResponse,
   type ChatMessageReceiveRequest,
-  type PlayerAttackResponse
+  type PlayerAttackResponse,
+  type Species
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
 import { PLANKTON_SPAWN_LIST } from "./constants/spawnList";
+import { SPECIES_ASSET } from "./constants/asset";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -162,18 +164,20 @@ io.on("connection", (socket: Socket) => {
 
   socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
     const check: boolean = global.playerList.has(data.playerId);
+    const targetSpecies: Species | undefined = SPECIES_ASSET.get(global.playerList.get(data.playerId).speciesId as number);
     const response: ValidateRespone = {
       isSuccess: false,
-      msg: "존재하지 않는 플레이어입니다."
+      msg: "유효하지 않은 player 입니다."
     };
 
-    if (!check) {
+    if (!check || targetSpecies === undefined) {
       callback(response);
       return;
     }
 
     const playerNickname = global.playerList.get(data.playerId).nickname;
     const sendFormat: ChatMessageReceiveRequest = {
+      speciesname: targetSpecies.name,
       playerId: data.playerId,
       nickname: playerNickname,
       timeStamp: Date.now(),
