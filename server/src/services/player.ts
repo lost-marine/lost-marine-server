@@ -14,6 +14,8 @@ import { type Position } from "@/classes/position";
 import { createBuilder } from "@/util/builder";
 import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 import { validateCanCrushArea } from "@/util/crushValid";
+import { type Area } from "@/classes/area";
+import { isAttacking } from "@/util/attack";
 
 @Service()
 export class PlayerService {
@@ -205,9 +207,13 @@ export class PlayerService {
     const playerA: Player = global.playerList.get(request.playerAId);
     const playerB: Player = global.playerList.get(request.playerBId);
 
-    playerA.updateAttackerInfo();
-    playerB.updateDefenderInfo(playerA);
+    const areaA: Area = playerA.playerToArea();
+    const areaB: Area = playerB.playerToArea();
 
+    if (isAttacking(areaA, areaB)) {
+      playerA.updateAttackerInfo();
+      playerB.updateDefenderInfo(playerA);
+    }
     const attacker: PlayerAttackResponse = {
       playerId: playerA.playerId,
       health: playerA.health,
