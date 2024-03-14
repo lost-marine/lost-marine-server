@@ -10,6 +10,7 @@
     "rbush": "^3.0.1",
     "reflect-metadata": "^0.2.1",
     "socket.io": "^4.7.4",
+    "socket.io-client": "^4.7.4",
     "tslib": "^2.6.2",
     "typedi": "^0.10.0",
     "typescript": "^5.3.3"
@@ -43,6 +44,9 @@
   "jest": {
     "verbose": true,
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
   }
 }
