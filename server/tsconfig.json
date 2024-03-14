@@ -5,13 +5,13 @@
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "allowJs": true, // JavaScript 파일 포함 허용
     "strictNullChecks": true,
     "paths": {
       "@/*": ["./src/*"]
     },
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "experimentalDecorators": true
   }
 }

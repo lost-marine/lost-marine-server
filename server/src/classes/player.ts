@@ -1,8 +1,10 @@
 import { Creature } from "@/classes/creature";
 import { createBuilder } from "@/util/builder";
 import { Area } from "./area";
+import { type Species } from "@/types";
 
 export class Player extends Creature {
+  [x: string]: any;
   direction: number = 2;
   health: number = 100;
   type: number = 1;
@@ -56,6 +58,14 @@ export class Player extends Creature {
   updateDefenderInfo(attacker: Player): void {
     this.health -= attacker.power;
     this.isGameOver = this.health <= 0;
+  }
+
+  evolvePlayer(this: Player, targetSpecies: Species): void {
+    this.speciesId = targetSpecies.speciesId;
+    this.power = targetSpecies.power;
+    this.width = targetSpecies.width;
+    this.height = targetSpecies.height;
+    this.health = targetSpecies.health;
   }
 
   /**

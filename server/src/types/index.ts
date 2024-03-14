@@ -37,7 +37,7 @@ export type Species = {
   height: number;
   power: number;
   health: number;
-  evolutionList: Set<number>;
+  evolutionSet: Set<number>;
   tierCode: number;
 };
 
@@ -52,6 +52,7 @@ export type ChatMessageSendResponse = {
 };
 
 export type ChatMessageReceiveRequest = {
+  speciesname: string;
   nickname: string;
   timeStamp: number;
 } & ChatMessageSendResponse;
