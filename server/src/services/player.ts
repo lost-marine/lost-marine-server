@@ -64,7 +64,7 @@ export class PlayerService {
     // 닉네임 중복 검사
     if (isSuccess) {
       global.playerList?.forEach((player) => {
-        if (player.nickname === nickname) {
+        if (player?.nickname === nickname) {
           isSuccess = false;
           msg = "중복된 아이디입니다.";
         }
@@ -286,8 +286,8 @@ export class PlayerService {
   deletePlayerBySocketId(socketId: string): number {
     let playerId: number = 0;
 
-    global.playerList?.forEach((value, key) => {
-      if (value.socketId === socketId) {
+    global.playerList?.forEach((player, key) => {
+      if (player?.socketId === socketId) {
         playerId = key;
         global.playerList?.delete(key);
       }
