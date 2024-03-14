@@ -1,24 +1,62 @@
-// 공격자의 direction 값이 victim의 경계선과 맞닿아 있는지를 확인하는 함수
-import { type Area } from "@/classes/area";
-import Matter from "matter-js";
-
+import { type Area } from "../classes/area";
+import matter from "matter-js";
+const { Bodies, Bounds } = matter;
+/**
+ * A가 B를 공격하고 있는지를 검증함
+ * @date 3/14/2024 - 11:00:44 AM
+ * @author 양소영
+ *
+ * @export
+ * @param {Area} areaA
+ * @param {Area} areaB
+ * @returns {boolean}
+ */
 export function isAttacking(areaA: Area, areaB: Area): boolean {
-  const attacker: Matter.Body = Matter.Bodies.rectangle(areaA.centerX, areaA.centerY, areaA.width, areaA.height);
-  const victim: Matter.Body = Matter.Bodies.rectangle(areaB.centerX, areaB.centerY, areaB.width, areaB.height);
+  // A의 입의 위치로 mouthArea를 원으로 만들어서 검증
+  let centerX = areaA.centerX;
+  let centerY = areaA.centerY;
+  const direction = areaA.direction;
+  const diagonalLength = areaA.width / 2;
+  const halfDiagonalLength = diagonalLength / Math.sqrt(2);
 
-  const attackDirection = areaA.direction;
-  const attackerVertices = attacker.vertices;
-  const victimVertices = victim.vertices; // 피해자의 꼭지점 배열 가져오기
+  switch (direction) {
+    case 0:
+      centerY -= areaA.height / 2;
+      break;
+    case 1:
+      centerX += halfDiagonalLength;
+      centerY -= halfDiagonalLength;
+      break;
+    case 2:
+      centerX += areaA.width / 2;
+      break;
+    case 3:
+      centerX += halfDiagonalLength;
+      centerY += halfDiagonalLength;
+      break;
+    case 4:
+      centerY += areaA.height / 2;
+      break;
+    case 5:
+      centerX -= halfDiagonalLength;
+      centerY += halfDiagonalLength;
+      break;
+    case 6:
+      centerX -= areaA.width / 2;
+      break;
+    case 7:
+      centerX -= halfDiagonalLength;
+      centerY -= halfDiagonalLength;
+      break;
+  }
 
-  console.log(attackerVertices);
-  console.log(victimVertices);
+  console.log(centerX + ", " + centerY);
 
-  // 공격자의 방향에 따라 맞닿은 경계선의 인덱스를 결정합니다.
-  const boundaryIndex = attackDirection;
+  const playerAMouth = Bodies.circle(centerX, centerY, 5).bounds;
 
-  // 공격자의 방향에 따라 해당 방향의 꼭지점이 victim의 경계선과 맞닿아 있는지를 확인합니다.
-  const vertex = attackerVertices[boundaryIndex];
-  console.log(vertex);
-  // vertex가 victim의 경계선과 맞닿아 있는지 확인합니다.
-  return Matter.Vertices.contains(victimVertices, vertex);
+  const playerBArea = Bodies.rectangle(areaB.centerX, areaB.centerY, areaB.width, areaB.height, {
+    angle: (areaB.direction * 45 * Math.PI) / 180
+  }).bounds;
+
+  return Bounds.overlaps(playerAMouth, playerBArea);
 }

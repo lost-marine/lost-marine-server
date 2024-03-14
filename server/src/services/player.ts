@@ -170,7 +170,6 @@ export class PlayerService {
   isCrashValidate(request: PlayerCrashRequest): ValidateRespone {
     let isSuccess: boolean = true;
     let msg: string = "플레이어 충돌 검증 결과 성공했습니다";
-
     console.log(request.playerAId + " " + request.playerBId);
 
     // 플레이어 두 명이 playerList에 존재하는지 검증
@@ -207,6 +206,8 @@ export class PlayerService {
     const areaB: Area = playerB.playerToArea();
 
     if (isAttacking(areaA, areaB)) {
+      console.log(playerA);
+      console.log("공격!!");
       playerA.updateAttackerInfo();
       playerB.updateDefenderInfo(playerA);
     }
