@@ -1,4 +1,5 @@
 import { type Position } from "../classes/position";
+import planktonSpawnArea from "@/constants/planktonSpawnArea.json";
 
 export const PLAYER_SPAWN_LIST: Position[] = [
   { x: 398, y: 179 },
@@ -33,35 +34,4 @@ export const PLAYER_SPAWN_LIST: Position[] = [
   { x: 256, y: 282 }
 ];
 
-export const PLANKTON_SPAWN_LIST: Position[] = [
-  { x: 44, y: 198 },
-  { x: 471, y: 50 },
-  { x: 8, y: 215 },
-  { x: 209, y: 243 },
-  { x: 204, y: 88 },
-  { x: 322, y: 134 },
-  { x: 143, y: 270 },
-  { x: 115, y: 114 },
-  { x: 332, y: 90 },
-  { x: 438, y: 25 },
-  { x: 247, y: 221 },
-  { x: 224, y: 71 },
-  { x: 115, y: 46 },
-  { x: 170, y: 84 },
-  { x: 70, y: 274 },
-  { x: 493, y: 144 },
-  { x: 250, y: 279 },
-  { x: 449, y: 281 },
-  { x: 352, y: 254 },
-  { x: 218, y: 204 },
-  { x: 104, y: 248 },
-  { x: 62, y: 2 },
-  { x: 38, y: 160 },
-  { x: 239, y: 227 },
-  { x: 115, y: 293 },
-  { x: 412, y: 106 },
-  { x: 472, y: 79 },
-  { x: 318, y: 209 },
-  { x: 336, y: 92 },
-  { x: 493, y: 207 }
-];
+export const PLANKTON_SPAWN_LIST: Position[] = planktonSpawnArea;
