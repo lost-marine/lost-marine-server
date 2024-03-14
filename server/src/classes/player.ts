@@ -60,7 +60,7 @@ export class Player extends Creature {
     this.isGameOver = this.health <= 0;
   }
 
-  evolutePlayer(this: Player, targetSpecies: Species): void {
+  evolvePlayer(this: Player, targetSpecies: Species): void {
     this.speciesId = targetSpecies.speciesId;
     this.power = targetSpecies.power;
     this.width = targetSpecies.width;
