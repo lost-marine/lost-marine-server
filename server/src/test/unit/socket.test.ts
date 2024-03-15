@@ -9,6 +9,7 @@ import { PlayerService } from "@/services/player";
 import Container from "typedi";
 import { PlanktonService } from "@/services/plankton";
 import { PLANKTON_SPAWN_LIST } from "@/constants/spawnList";
+import { type PlayerResponse, type ValidateRespone } from "@/types";
 
 let io: Server, serverSocket: Socket, clientSocket: clientSock;
 let tester: Player;
@@ -59,18 +60,53 @@ describe("socket test", () => {
     expect(planktonInitializer.mock.results.values[0]).toBeUndefined();
   });
 
-  test.only("nickname-validate", async () => {
-    clientSocket.emit("nickname-validate", tester, (res) => {
+  // test.only("nickname-validate", async () => {
+  //   clientSocket.emit("nickname-validate", tester, (res: any) => {
+  //     console.log(res);
+  //   });
+  //   await onceSocketConnected(serverSocket, "nickname-validate").then((r: Player) => {
+  //     const nicknameValidator: jest.SpyInstance = jest.spyOn(playerService, "validateNickName");
+  //     playerService.validateNickName(tester.nickname);
+  //     expect(nicknameValidator).toBeCalledWith(tester.nickname);
+  //     expect(nicknameValidator).toBeCalledTimes(1);
+  //     expect(nicknameValidator).toHaveReturned();
+  //     expect(nicknameValidator.mock.results[0]?.value.isSuccess).toBeFalsy();
+  //     jest.clearAllMocks();
+  //   });
+  // });
+
+  test.only("player-enter", async () => {
+    clientSocket.emit("player-enter", undefined, (res: any) => {
       console.log(res);
     });
-    await onceSocketConnected(serverSocket, "nickname-validate").then((r: Player) => {
-      const nicknameValidator: jest.SpyInstance = jest.spyOn(playerService, "validateNickName");
-      playerService.validateNickName(tester.nickname);
-      expect(nicknameValidator).toBeCalledWith(tester.nickname);
-      expect(nicknameValidator).toBeCalledTimes(1);
-      expect(nicknameValidator).toHaveReturned();
-      expect(nicknameValidator.mock.results[0]?.value.isSuccess).toBeFalsy();
-      jest.clearAllMocks();
+    await onceSocketConnected(serverSocket, "player-enter").then((inputData: Player) => {
+      let validResponse: ValidateRespone;
+      let gameStartReq: PlayerResponse | undefined;
+
+      try {
+        if (inputData === null) {
+          console.log("throw error");
+          throw new Error("Invalid Player");
+        }
+        if (playerService.validateNickName(inputData.nickname).isSuccess) {
+          void serverSocket.join("room00");
+          gameStartReq = playerService.addPlayer(inputData, serverSocket.id);
+        } else {
+          throw new Error("잘못된 닉네임입니다.");
+        }
+        validResponse = {
+          isSuccess: true,
+          msg: "플레이어가 입장에 성공하였습니다!"
+        };
+      } catch (error: unknown) {
+        validResponse = {
+          isSuccess: false,
+          msg: error instanceof Error ? error.message : "알 수 없는 이유로 실패하였습니다."
+        };
+      }
+
+      expect(validResponse.isSuccess).toBeFalsy();
+      expect(gameStartReq).toBeUndefined();
     });
   });
 
@@ -80,6 +116,6 @@ describe("socket test", () => {
     expect(evolutionHandler).toBeCalledWith(7, tester);
     expect(evolutionHandler).toBeCalledTimes(1);
     expect(evolutionHandler).toHaveReturned();
-    console.log(evolutionHandler.mock.results[0]?.value);
+    // console.log(evolutionHandler.mock.results[0]?.value);
   });
 });
