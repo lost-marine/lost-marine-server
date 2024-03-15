@@ -14,7 +14,7 @@ const global: GlobalStore = {
   planktonList: null,
   planktonTree: null,
   assert: function (condition: unknown, message?: string): asserts condition {
-    if (condition === undefined) {
+    if (condition === undefined || condition === null) {
       throw new Error(message ?? "Invalid type");
     }
   }

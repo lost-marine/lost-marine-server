@@ -89,7 +89,8 @@ io.on("connection", (socket: Socket) => {
     };
 
     try {
-      if (player === undefined || player === null) throw new Error("유효하지 않은 Player입니다.");
+      global.assert(player);
+
       if (playerService.validateNickName(player.nickname).isSuccess) {
         void socket.join(roomId);
         gameStartReq = playerService.addPlayer(player, socket.id);
