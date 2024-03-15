@@ -110,15 +110,15 @@ io.on("connection", (socket: Socket) => {
   });
 
   // 플레이어 본인 퇴장
-  socket.on("quit", (playerId: number) => {
+  socket.on("player-quit", (playerId: number) => {
     playerService.deletePlayerByPlayerId(playerId);
-    sendWithoutMe(socket, "quit", playerId);
+    sendWithoutMe(socket, "player-quit", playerId);
   });
 
   // 새로고침이나 창닫음으로 연결이 끊기는 경우
   socket.on("disconnect", () => {
     const result = playerService.deletePlayerBySocketId(socket.id);
-    sendWithoutMe(socket, "quit", result);
+    sendWithoutMe(socket, "player-quit", result);
   });
 
   // 플랑크톤 섭취 이벤트
