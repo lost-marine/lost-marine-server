@@ -10,7 +10,8 @@ import {
   type Species
 } from "@/types";
 import { MapService } from "./map";
-import { type Position } from "@/classes/position";
+// import { type Position } from "@/classes/position";
+import { type Area } from "@/classes/area";
 import { createBuilder } from "@/util/builder";
 // import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 import { validateCanCrushArea } from "@/util/crushValid";
@@ -36,13 +37,13 @@ export class PlayerService {
    */
   initPlayer(player: Player, socketId: string): Player {
     const mapService = Container.get<MapService>(MapService);
-    const pos: Position = mapService.getSpawnablePosition(0);
+    const spawnArea: Area = mapService.getSpawnableArea(0);
     const nickname = player.nickname;
     const myInfo: Player = createBuilder(Player)
       .setPlayerId(this.count++)
       .setNickname(nickname)
-      .setCenterX(pos.x)
-      .setCenterY(pos.y)
+      .setCenterX(spawnArea.centerX)
+      .setCenterY(spawnArea.centerY)
       .setSocketId(socketId)
       .setSpeciesId(player.speciesId)
       .build();
