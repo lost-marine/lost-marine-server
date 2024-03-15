@@ -90,24 +90,24 @@ io.on("connection", (socket: Socket) => {
 
     try {
       global.assert(player);
-
       if (playerService.validateNickName(player.nickname).isSuccess) {
         void socket.join(roomId);
         gameStartReq = playerService.addPlayer(player, socket.id);
       } else {
         throw new Error("잘못된 닉네임입니다.");
       }
-
-      callback(validResponse);
-      const planktonList: Plankton[] = [...global.planktonList.values()];
-      sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
-      sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
     } catch (error: unknown) {
       validResponse = {
         isSuccess: false,
         msg: error instanceof Error ? error.message : "알 수 없는 이유로 실패하였습니다."
       };
+    } finally {
       callback(validResponse);
+      if (validResponse.isSuccess) {
+        const planktonList: Plankton[] = [...global.planktonList.values()];
+        sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
+        sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+      }
     }
   });
   // 진화요청(Client→ Server)
