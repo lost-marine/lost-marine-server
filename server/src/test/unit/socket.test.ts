@@ -60,20 +60,20 @@ describe("socket test", () => {
     expect(planktonInitializer.mock.results.values[0]).toBeUndefined();
   });
 
-  // test.only("nickname-validate", async () => {
-  //   clientSocket.emit("nickname-validate", tester, (res: any) => {
-  //     console.log(res);
-  //   });
-  //   await onceSocketConnected(serverSocket, "nickname-validate").then((r: Player) => {
-  //     const nicknameValidator: jest.SpyInstance = jest.spyOn(playerService, "validateNickName");
-  //     playerService.validateNickName(tester.nickname);
-  //     expect(nicknameValidator).toBeCalledWith(tester.nickname);
-  //     expect(nicknameValidator).toBeCalledTimes(1);
-  //     expect(nicknameValidator).toHaveReturned();
-  //     expect(nicknameValidator.mock.results[0]?.value.isSuccess).toBeFalsy();
-  //     jest.clearAllMocks();
-  //   });
-  // });
+  test.only("nickname-validate", async () => {
+    clientSocket.emit("nickname-validate", tester, (res: any) => {
+      console.log(res);
+    });
+    await onceSocketConnected(serverSocket, "nickname-validate").then((r: Player) => {
+      const nicknameValidator: jest.SpyInstance = jest.spyOn(playerService, "validateNickName");
+      playerService.validateNickName(tester.nickname);
+      expect(nicknameValidator).toBeCalledWith(tester.nickname);
+      expect(nicknameValidator).toBeCalledTimes(1);
+      expect(nicknameValidator).toHaveReturned();
+      expect(nicknameValidator.mock.results[0]?.value.isSuccess).toBeFalsy();
+      jest.clearAllMocks();
+    });
+  });
 
   test.only("player-enter", async () => {
     clientSocket.emit("player-enter", undefined, (res: any) => {
@@ -116,6 +116,5 @@ describe("socket test", () => {
     expect(evolutionHandler).toBeCalledWith(7, tester);
     expect(evolutionHandler).toBeCalledTimes(1);
     expect(evolutionHandler).toHaveReturned();
-    // console.log(evolutionHandler.mock.results[0]?.value);
   });
 });
