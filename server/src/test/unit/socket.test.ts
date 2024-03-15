@@ -23,7 +23,7 @@ beforeAll((done) => {
   Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
   planktonManager = Container.get<PlanktonService>(PlanktonService);
   playerService = Container.get<PlayerService>(PlayerService);
-  tester = createBuilder(Player).setCenterX(0).setCenterY(0).setNickname("rhemeddj").setPoint(5000).setSpeciesId(1).build();
+  tester = createBuilder(Player).setCenterX(0).setCenterY(0).setNickname("rhemeddj@!23").setPoint(5000).setSpeciesId(1).build();
   io = new Server(httpServer);
   httpServer.listen(() => {
     const port: number = (httpServer.address() as AddressInfo).port;
@@ -76,28 +76,28 @@ describe("socket test", () => {
   });
 
   test.only("player-enter", async () => {
-    clientSocket.emit("player-enter", undefined, (res: any) => {
+    clientSocket.emit("player-enter", tester, (res: any) => {
       console.log(res);
     });
-    await onceSocketConnected(serverSocket, "player-enter").then((inputData: Player) => {
-      let validResponse: ValidateRespone;
-      let gameStartReq: PlayerResponse | undefined;
+
+    await onceSocketConnected(serverSocket, "player-enter").then((player: Player) => {
+      let validResponse: ValidateRespone = {
+        isSuccess: true,
+        msg: "플레이어 입장 성공!"
+      };
+      let gameStartReq: PlayerResponse = {
+        myInfo: player,
+        playerList: global.playerList
+      };
 
       try {
-        if (inputData === null) {
-          console.log("throw error");
-          throw new Error("Invalid Player");
-        }
-        if (playerService.validateNickName(inputData.nickname).isSuccess) {
-          void serverSocket.join("room00");
-          gameStartReq = playerService.addPlayer(inputData, serverSocket.id);
+        global.assert(player);
+        if (playerService.validateNickName(player.nickname).isSuccess) {
+          void serverSocket.join("000");
+          gameStartReq = playerService.addPlayer(player, serverSocket.id);
         } else {
           throw new Error("잘못된 닉네임입니다.");
         }
-        validResponse = {
-          isSuccess: true,
-          msg: "플레이어가 입장에 성공하였습니다!"
-        };
       } catch (error: unknown) {
         validResponse = {
           isSuccess: false,
@@ -106,7 +106,7 @@ describe("socket test", () => {
       }
 
       expect(validResponse.isSuccess).toBeFalsy();
-      expect(gameStartReq).toBeUndefined();
+      expect(validResponse.msg).toBe("잘못된 닉네임입니다.");
     });
   });
 
