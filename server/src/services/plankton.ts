@@ -5,7 +5,7 @@ import { Inject, Service, Container } from "typedi";
 import "reflect-metadata";
 import { PlayerService } from "./player";
 import { type PlanktonEatResponse } from "@/types";
-import { type Position } from "@/classes/position";
+import { type Area } from "@/classes/area";
 import { MapService } from "./map";
 
 @Service()
@@ -51,10 +51,10 @@ export class PlanktonService {
     const mapService = Container.get<MapService>(MapService);
 
     for (let i = 0; i < this.planktonCnt; i++) {
-      const position: Position = mapService.getSpawnablePosition(1);
+      const spawnArea: Area = mapService.getSpawnableArea(1);
       const plankton: Plankton = createBuilder(Plankton)
-        .setCenterX(position.x)
-        .setCenterY(position.y)
+        .setCenterX(spawnArea.centerX)
+        .setCenterY(spawnArea.centerY)
         .setPlanktonId(this.idCounter)
         .build();
 
@@ -105,10 +105,10 @@ export class PlanktonService {
     const mapService = Container.get<MapService>(MapService);
 
     for (let i = this.eatedPlanktonCnt; i > 0; i--) {
-      const position: Position = mapService.getSpawnablePosition(1);
+      const spawnArea: Area = mapService.getSpawnableArea(1);
       const plankton: Plankton = createBuilder(Plankton)
-        .setCenterX(position.x)
-        .setCenterY(position.y)
+        .setCenterX(spawnArea.centerX)
+        .setCenterY(spawnArea.centerY)
         .setPlanktonId(this.idCounter)
         .build();
 
