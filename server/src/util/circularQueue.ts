@@ -55,7 +55,7 @@ export class CircularQueue {
 
   private readonly initQueue = (queueType: number): void => {
     if (queueType === 0) {
-      // PLAYER_SPAWN_LIST.sort(() => Math.random() - 0.5);
+      PLAYER_SPAWN_LIST.sort(() => Math.random() - 0.5);
       for (const pos of PLAYER_SPAWN_LIST) {
         this.enQueue(pos);
       }
