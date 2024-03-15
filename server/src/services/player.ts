@@ -148,11 +148,12 @@ export class PlayerService {
    */
   updatePlayerInfo(player: Player): Player[] {
     const playerId = player.playerId;
-    const item: Player | undefined = global.playerList?.get(playerId);
-    // console.log(item);
-
-    item?.updatePlayerInfo(player);
-    global.playerList?.set(playerId, item);
+    // 플레이어 존재하는 경우에만
+    if (global.playerList.has(player) === true) {
+      const item: Player = global.playerList?.get(playerId);
+      item?.updatePlayerInfo(player);
+      global.playerList?.set(playerId, item);
+    }
 
     return this.getPlayerList();
   }
