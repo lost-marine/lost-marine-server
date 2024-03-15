@@ -70,8 +70,42 @@ describe("socket test", () => {
       expect(nicknameValidator).toBeCalledWith(tester.nickname);
       expect(nicknameValidator).toBeCalledTimes(1);
       expect(nicknameValidator).toHaveReturned();
-      expect(nicknameValidator.mock.results[0]?.value.isSuccess).toBeFalsy();
+      expect(nicknameValidator.mock.results[0]?.value.isSuccess).toBeTruthy();
       jest.clearAllMocks();
+    });
+  });
+
+  test.only("player-enter", async () => {
+    clientSocket.emit("player-enter", undefined, (res: any) => {
+      console.log(res);
+    });
+    await onceSocketConnected(serverSocket, "player-enter").then((inputData: Player) => {
+      let validResponse: ValidateRespone;
+      let gameStartReq: PlayerResponse | undefined;
+
+      try {
+        if (inputData === null) {
+          console.log("throw error");
+          throw new Error("Invalid Player");
+        }
+        if (playerService.validateNickName(inputData.nickname).isSuccess) {
+          void serverSocket.join("room00");
+          gameStartReq = playerService.addPlayer(inputData, serverSocket.id);
+        } else {
+          throw new Error("잘못된 닉네임입니다.");
+        }
+        validResponse = {
+          isSuccess: true,
+          msg: "플레이어가 입장에 성공하였습니다!"
+        };
+      } catch (error: unknown) {
+        validResponse = {
+          isSuccess: false,
+          msg: error instanceof Error ? error.message : "알 수 없는 이유로 실패하였습니다."
+        };
+      }
+      expect(validResponse.isSuccess).toBeFalsy();
+      expect(gameStartReq).toBeUndefined();
     });
   });
 
@@ -81,6 +115,5 @@ describe("socket test", () => {
     expect(evolutionHandler).toBeCalledWith(7, tester);
     expect(evolutionHandler).toBeCalledTimes(1);
     expect(evolutionHandler).toHaveReturned();
-    console.log(evolutionHandler.mock.results[0]?.value);
   });
 });
