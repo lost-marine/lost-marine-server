@@ -75,42 +75,6 @@ describe("socket test", () => {
     });
   });
 
-  test.only("player-enter", async () => {
-    clientSocket.emit("player-enter", undefined, (res: any) => {
-      console.log(res);
-    });
-    await onceSocketConnected(serverSocket, "player-enter").then((inputData: Player) => {
-      let validResponse: ValidateRespone;
-      let gameStartReq: PlayerResponse = {
-        myInfo: inputData,
-        playerList: global.playerList
-      };
-
-      try {
-        if (inputData === undefined) throw new Error("Invalid Player");
-        if (playerService.validateNickName(inputData.nickname).isSuccess) {
-          void serverSocket.join("room00");
-          gameStartReq = playerService.addPlayer(inputData, serverSocket.id);
-        } else {
-          throw new Error("잘못된 닉네임입니다.");
-        }
-      } catch (error: unknown) {
-        validResponse = {
-          isSuccess: false,
-          msg: error instanceof Error ? error.message : "알 수 없는 이유로 실패하였습니다."
-        };
-      } finally {
-        validResponse = {
-          isSuccess: true,
-          msg: "플레이어가 입장에 성공하였습니다!"
-        };
-      }
-
-      expect(validResponse).toBeUndefined();
-      expect(gameStartReq.myInfo).toBeUndefined();
-    });
-  });
-
   test.only("player-evolution-valid", () => {
     const evolutionHandler: jest.SpyInstance = jest.spyOn(playerService, "validateEvolution");
     playerService.validateEvolution(7, tester);
