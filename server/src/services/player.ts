@@ -190,14 +190,13 @@ export class PlayerService {
 
   /**
    * 플레이어 간 공격 처리
-   * TODO: 두 명의 플레이어 중 누가 공격을 했는지 검증 필요
    * @date 3/8/2024 - 11:20:37 AM
    * @author 양소영
    *
    * @param {PlayerCrashRequest} data
    * @returns {Player[]}
    */
-  attackPlayer(request: PlayerCrashRequest): PlayerAttackResponse[] {
+  attackPlayer(request: PlayerCrashRequest): PlayerAttackResponse[] | undefined {
     const playerA: Player = global.playerList.get(request.playerAId);
     const playerB: Player = global.playerList.get(request.playerBId);
 
@@ -205,32 +204,11 @@ export class PlayerService {
     const areaB: Area = playerB.playerToArea();
 
     if (isAttacking(areaA, areaB)) {
-      console.log(playerA);
-      console.log("공격!!");
       playerA.updateAttackerInfo();
       playerB.updateDefenderInfo(playerA);
+
+      return [playerA.toPlayerAttackResponse(), playerB.toPlayerAttackResponse()];
     }
-    const attacker: PlayerAttackResponse = {
-      playerId: playerA.playerId,
-      health: playerA.health,
-      point: playerA.point,
-      centerX: playerA.centerX,
-      centerY: playerA.centerY,
-      isGameOver: playerA.isGameOver,
-      socketId: playerA.socketId
-    };
-
-    const defender: PlayerAttackResponse = {
-      playerId: playerB.playerId,
-      health: playerB.health,
-      point: playerB.point,
-      centerX: playerB.centerX,
-      centerY: playerB.centerY,
-      isGameOver: playerB.isGameOver,
-      socketId: playerB.socketId
-    };
-
-    return [attacker, defender];
   }
 
   /**
@@ -241,17 +219,23 @@ export class PlayerService {
    * @param {PlayerAttackResponse} player
    * @returns {plyaerGameOverResponse}
    */
-  getGameOver(player: PlayerAttackResponse): plyaerGameOverResponse {
-    const gameoverPlayer: Player = global.playerList.get(player.playerId);
+  getGameOver(playerList: PlayerAttackResponse[]): plyaerGameOverResponse {
+    const attackPlayer: Player = global.playerList.get(playerList[0].playerId);
+    const gameoverPlayer: Player = global.playerList.get(playerList[1].playerId);
 
     const response: plyaerGameOverResponse = {
       playerId: gameoverPlayer.playerId,
+      playerNickname: gameoverPlayer.nickname,
+      attackerNickname: attackPlayer.nickname,
+      attackerSpeciesId: attackPlayer.speciesId,
+      message: "당신은 " + attackPlayer.nickname + "에게 먹혔습니다",
       planktonCount: gameoverPlayer.planktonCount,
       microplasticCount: gameoverPlayer.microplasticCount,
       playerCount: gameoverPlayer.playerCount,
       point: gameoverPlayer.point
     };
 
+    console.log(response);
     return response;
   }
 

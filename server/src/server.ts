@@ -173,21 +173,24 @@ io.on("connection", (socket: Socket) => {
 
     // 충돌 검증이 성공적인 경우만 공격 시도
     if (validateResponse.isSuccess) {
-      const result: PlayerAttackResponse[] = playerService.attackPlayer(data);
+      const result: PlayerAttackResponse[] | undefined = playerService.attackPlayer(data);
 
-      // 플레이어 상태 정보 수정
-      result.forEach((player) => {
-        const mySocketId: string = player.socketId;
-        const { socketId, ...playerResponse } = player;
-        sendToMe(mySocketId, "player-status-sync", playerResponse);
+      if (result !== undefined && result.length === 2) {
+        // 플레이어 상태 정보 수정
+        result.forEach((player) => {
+          const mySocketId: string = player.socketId;
+          const { socketId, ...playerResponse } = player;
+          sendToMe(mySocketId, "player-status-sync", playerResponse);
 
-        // 게임 오버인 경우
-        if (player.isGameOver) {
-          sendToMe(player.socketId, "game-over", playerService.getGameOver(player));
-          sendWithoutMe(socket, "player-quit", player.playerId);
-          playerService.deletePlayerByPlayerId(player.playerId);
-        }
-      });
+          // 게임 오버인 경우
+          if (player.isGameOver) {
+            console.log("game-over");
+            sendToMe(player.socketId, "game-over", playerService.getGameOver(result));
+            sendWithoutMe(socket, "player-quit", player.playerId);
+            playerService.deletePlayerByPlayerId(player.playerId);
+          }
+        });
+      }
     }
   });
 
