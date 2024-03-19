@@ -22,6 +22,7 @@ import { type Plankton } from "./classes/plankton";
 import { PLANKTON_SPAWN_LIST } from "./constants/spawnList";
 import { SPECIES_ASSET } from "./constants/asset";
 import assert from "assert";
+import { getErrorMessage, getSuccessMessage } from "./message/message-handler";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -156,8 +157,19 @@ io.on("connection", (socket: Socket) => {
 
   // 플레이어 간 공격
   socket.on("player-crash", (data: PlayerCrashRequest, callback) => {
-    const validateResponse: ValidateRespone = playerService.isCrashValidate(data);
-    callback(validateResponse);
+    const validateResponse: ValidateRespone = {
+      isSuccess: true,
+      msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
+    };
+    try {
+      playerService.isCrashValidate(data);
+    } catch (error: unknown) {
+      console.log(error);
+      validateResponse.isSuccess = false;
+      validateResponse.msg = getErrorMessage(error);
+    } finally {
+      callback(validateResponse);
+    }
 
     // 충돌 검증이 성공적인 경우만 공격 시도
     if (validateResponse.isSuccess) {
