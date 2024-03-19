@@ -10,7 +10,8 @@ import {
   type Species
 } from "@/types";
 import { MapService } from "./map";
-import { type Position } from "@/classes/position";
+// import { type Position } from "@/classes/position";
+import { type Area } from "@/classes/area";
 import { createBuilder } from "@/util/builder";
 // import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 import { validateCanCrushArea } from "@/util/crushValid";
@@ -38,15 +39,19 @@ export class PlayerService {
    */
   initPlayer(player: Player, socketId: string): Player {
     const mapService = Container.get<MapService>(MapService);
-    const pos: Position = mapService.getSpawnablePosition(0);
+    const spawnArea: Area = mapService.getSpawnableArea(0);
     const nickname = player.nickname;
+    const speciesInfo: Species | undefined = SPECIES_ASSET.get(player.speciesId);
+    if (speciesInfo === undefined) throw new Error("Invalid Player Infomation");
     const myInfo: Player = createBuilder(Player)
       .setPlayerId(this.count++)
       .setNickname(nickname)
-      .setCenterX(pos.x)
-      .setCenterY(pos.y)
+      .setCenterX(spawnArea.centerX)
+      .setCenterY(spawnArea.centerY)
       .setSocketId(socketId)
       .setSpeciesId(player.speciesId)
+      .setWidth(speciesInfo.width)
+      .setHeight(speciesInfo.height)
       .build();
     console.log(myInfo);
     return myInfo;
@@ -66,7 +71,7 @@ export class PlayerService {
     // 닉네임 중복 검사
     if (isSuccess) {
       global.playerList?.forEach((player) => {
-        if (player.nickname === nickname) {
+        if (player?.nickname === nickname) {
           isSuccess = false;
           msg = "중복된 아이디입니다.";
         }
@@ -150,11 +155,12 @@ export class PlayerService {
    */
   updatePlayerInfo(player: Player): Player[] {
     const playerId = player.playerId;
-    const item: Player | undefined = global.playerList?.get(playerId);
-    // console.log(item);
-
-    item?.updatePlayerInfo(player);
-    global.playerList?.set(playerId, item);
+    // 플레이어 존재하는 경우에만
+    if (global.playerList.has(player) === true) {
+      const item: Player = global.playerList?.get(playerId);
+      item?.updatePlayerInfo(player);
+      global.playerList?.set(playerId, item);
+    }
 
     return this.getPlayerList();
   }
@@ -293,8 +299,8 @@ export class PlayerService {
   deletePlayerBySocketId(socketId: string): number {
     let playerId: number = 0;
 
-    global.playerList?.forEach((value, key) => {
-      if (value.socketId === socketId) {
+    global.playerList?.forEach((player, key) => {
+      if (player?.socketId === socketId) {
         playerId = key;
         global.playerList?.delete(key);
       }

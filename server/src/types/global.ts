@@ -1,6 +1,6 @@
 import { type Player } from "@/classes/player";
 import type { Plankton, TPlankton } from "@/classes/plankton";
-import type RBush from 'rbush';
+import type RBush from "rbush";
 
 type GlobalStore = {
   playerList: null | Map<number, Player>;
