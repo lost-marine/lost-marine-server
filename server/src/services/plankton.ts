@@ -84,13 +84,14 @@ export class PlanktonService {
       const player = playerService.eatPlankton(playerId);
       const result: PlanktonEatResponse = {
         isSuccess: true,
-        player
+        player,
+        msg: "섭취에 성공했습니다."
       };
 
       return result;
     }
 
-    return { isSuccess: false };
+    return { isSuccess: false, msg: "섭취에 실패했습니다." };
   }
 
   /**

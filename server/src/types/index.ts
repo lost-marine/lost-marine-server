@@ -35,6 +35,7 @@ export type GameStartData = {
 export type PlanktonEatResponse = {
   isSuccess: boolean;
   player?: Player;
+  msg: string;
 };
 
 export type Species = {
