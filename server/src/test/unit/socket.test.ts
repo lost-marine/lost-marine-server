@@ -10,6 +10,7 @@ import Container from "typedi";
 import { PlanktonService } from "@/services/plankton";
 import { PLANKTON_SPAWN_LIST } from "@/constants/spawnList";
 import { type PlayerResponse, type ValidateRespone } from "@/types";
+import assert from "node:assert";
 
 let io: Server, serverSocket: Socket, clientSocket: clientSock;
 let tester: Player;
@@ -91,7 +92,7 @@ describe("socket test", () => {
       };
 
       try {
-        global.assert(player);
+        assert(player);
         if (playerService.validateNickName(player.nickname).isSuccess) {
           void serverSocket.join("000");
           gameStartReq = playerService.addPlayer(player, serverSocket.id);
