@@ -21,7 +21,7 @@ import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
 import { PLANKTON_SPAWN_LIST } from "./constants/spawnList";
 import { SPECIES_ASSET } from "./constants/asset";
-import assert from "assert";
+import { typeEnsure, recordEnsure } from "@/util/assert";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -73,9 +73,19 @@ io.on("connection", (socket: Socket) => {
   }
 
   // 닉네임 확인
-  socket.on("nickname-validate", (player: Player, callback) => {
-    const validateResponse: ValidateRespone = playerService.validateNickName(player.nickname);
-    callback(validateResponse);
+  socket.on("nickname-validate", (nickname: string, callback) => {
+    let validateResponse: ValidateRespone = {
+      isSuccess: true,
+      msg: "닉네임 확인 되었습니다."
+    };
+    try {
+      validateResponse = playerService.validateNickName(typeEnsure(nickname));
+    } catch (error: unknown) {
+      validateResponse.isSuccess = false;
+      validateResponse.msg = error instanceof Error ? error.message : "Invalid Input Type";
+    } finally {
+      callback(validateResponse);
+    }
   });
 
   // 참가자 본인 입장(소켓 연결)
@@ -90,17 +100,16 @@ io.on("connection", (socket: Socket) => {
     };
 
     try {
-      assert(player);
-      if (playerService.validateNickName(player.nickname).isSuccess) {
+      if (playerService.validateNickName(typeEnsure(player).nickname).isSuccess) {
         void socket.join(roomId);
         gameStartReq = playerService.addPlayer(player, socket.id);
       } else {
-        throw new Error("잘못된 닉네임입니다.");
+        throw new Error("올바르지 않은 닉네임입니다.");
       }
     } catch (error: unknown) {
       validResponse = {
         isSuccess: false,
-        msg: error instanceof Error ? error.message : "알 수 없는 이유로 실패하였습니다."
+        msg: error instanceof Error ? error.message : "Invalid Input Type"
       };
     } finally {
       callback(validResponse);
@@ -113,23 +122,40 @@ io.on("connection", (socket: Socket) => {
   });
   // 진화요청(Client→ Server)
   socket.on("player-evolution", (player: Player, callback) => {
-    const validateResponse: ValidateRespone = playerService.validateEvolution(player);
-    callback(validateResponse);
+    let validateResponse: ValidateRespone = {
+      isSuccess: true,
+      msg: "진화에 성공했습니다."
+    };
+    try {
+      validateResponse = playerService.validateEvolution(player);
+    } catch (error: unknown) {
+      validateResponse.isSuccess = false;
+      validateResponse.msg = error instanceof Error ? error.message : "진화에 실패했습니다.";
+    } finally {
+      callback(validateResponse);
+    }
   });
 
   // game start
 
   // 플레이어 본인 위치 전송
   socket.on("my-position-sync", (data: Player) => {
-    const result = playerService.updatePlayerInfo(data);
-    // 다른 플레이어에게 변경사항 알려줌
-    sendWithoutMe(socket, "others-position-sync", result);
+    try {
+      const result = playerService.updatePlayerInfo(data);
+      // 다른 플레이어에게 변경사항 알려줌
+      sendWithoutMe(socket, "others-position-sync", result);
+    } catch (error) {
+      // TO-DO: 플레이어가 서버에서 관리하지 않은 미검증된 사용자의 요청인 경우
+      // 처리 방법 상의가 필요합니다.
+    }
   });
 
   // 플레이어 본인 퇴장
   socket.on("player-quit", (playerId: number) => {
-    playerService.deletePlayerByPlayerId(playerId);
-    sendWithoutMe(socket, "player-quit", playerId);
+    try {
+      playerService.deletePlayerByPlayerId(typeEnsure(playerId));
+      sendWithoutMe(socket, "player-quit", playerId);
+    } catch (error) {}
   });
 
   // 새로고침이나 창닫음으로 연결이 끊기는 경우
@@ -140,68 +166,83 @@ io.on("connection", (socket: Socket) => {
 
   // 플랑크톤 섭취 이벤트
   socket.on("plankton-eat", (data: { playerId: number; planktonId: number }, callback) => {
-    const result: PlanktonEatResponse = planktonManager.eatedPlankton(data.planktonId, data.playerId);
-
-    callback(result);
-
-    if (result.isSuccess) {
-      sendWithoutMe(socket, "plankton-delete", data.planktonId);
-    }
-
-    if (planktonManager.eatedPlanktonCnt > 2) {
-      // respone을 위한 플랑크톤 개수 조절이 필요합니다.
-      sendToAll("plankton-respawn", planktonManager.spawnPlankton());
+    let result: PlanktonEatResponse = {
+      isSuccess: true,
+      msg: "섭취에 성공했습니다."
+    };
+    try {
+      recordEnsure(data);
+      result = planktonManager.eatedPlankton(data.planktonId, data.playerId);
+    } catch (error: unknown) {
+      result.isSuccess = false;
+      result.msg = "Invalid Data Type";
+    } finally {
+      callback(result);
+      if (result.isSuccess) {
+        sendWithoutMe(socket, "plankton-delete", data.planktonId);
+      }
+      if (planktonManager.eatedPlanktonCnt > 2) {
+        // respone을 위한 플랑크톤 개수 조절이 필요합니다.
+        sendToAll("plankton-respawn", planktonManager.spawnPlankton());
+      }
     }
   });
 
   // 플레이어 간 공격
   socket.on("player-crash", (data: PlayerCrashRequest, callback) => {
-    const validateResponse: ValidateRespone = playerService.isCrashValidate(data);
-    callback(validateResponse);
+    try {
+      const validateResponse: ValidateRespone = playerService.isCrashValidate(recordEnsure(data));
+      callback(validateResponse);
 
-    // 충돌 검증이 성공적인 경우만 공격 시도
-    if (validateResponse.isSuccess) {
-      const result: PlayerAttackResponse[] = playerService.attackPlayer(data);
+      // 충돌 검증이 성공적인 경우만 공격 시도
+      if (validateResponse.isSuccess) {
+        const result: PlayerAttackResponse[] = playerService.attackPlayer(data);
 
-      // 플레이어 상태 정보 수정
-      result.forEach((player) => {
-        const mySocketId: string = player.socketId;
-        const { socketId, ...playerResponse } = player;
-        sendToMe(mySocketId, "player-status-sync", playerResponse);
+        // 플레이어 상태 정보 수정
+        result.forEach((player) => {
+          const mySocketId: string = player.socketId;
+          const { socketId, ...playerResponse } = player;
+          sendToMe(mySocketId, "player-status-sync", playerResponse);
 
-        // 게임 오버인 경우
-        if (player.isGameOver) {
-          sendToMe(player.socketId, "game-over", playerService.getGameOver(player));
-          sendWithoutMe(socket, "player-quit", player.playerId);
-          playerService.deletePlayerByPlayerId(player.playerId);
-        }
-      });
-    }
+          // 게임 오버인 경우
+          if (player.isGameOver) {
+            sendToMe(player.socketId, "game-over", playerService.getGameOver(player));
+            sendWithoutMe(socket, "player-quit", player.playerId);
+            playerService.deletePlayerByPlayerId(player.playerId);
+          }
+        });
+      }
+    } catch (error) {}
   });
 
   socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
-    const check: boolean = global.playerList.has(data.playerId);
-    const targetSpecies: Species | undefined = SPECIES_ASSET.get(global.playerList.get(data.playerId).speciesId as number);
     const response: ValidateRespone = {
       isSuccess: false,
-      msg: "유효하지 않은 player 입니다."
+      msg: "유효하지 않은 플레이어입니다."
     };
+    try {
+      recordEnsure(data);
+      const sender: Player = typeEnsure(global.playerList.get(data.playerId));
+      const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(sender.speciesId));
 
-    if (!check || targetSpecies === undefined) {
+      response.isSuccess = true;
+      response.msg = "채팅을 성공적으로 전달합니다.";
+
+      const sendFormat: ChatMessageReceiveRequest = {
+        speciesname: targetSpecies.name,
+        playerId: data.playerId,
+        nickname: sender.nickname,
+        timeStamp: Date.now(),
+        msg: data.msg
+      };
+
+      sendToAll("chat-message-receive", sendFormat);
+    } catch (error: unknown) {
+      response.isSuccess = false;
+      response.msg = error instanceof Error ? error.message : "채팅 전송에 실패했습니다.";
+    } finally {
       callback(response);
-      return;
     }
-
-    const playerNickname = global.playerList.get(data.playerId).nickname;
-    const sendFormat: ChatMessageReceiveRequest = {
-      speciesname: targetSpecies.name,
-      playerId: data.playerId,
-      nickname: playerNickname,
-      timeStamp: Date.now(),
-      msg: data.msg
-    };
-
-    sendToAll("chat-message-receive", sendFormat);
   });
 });
 
