@@ -39,7 +39,8 @@ export class PlayerService {
     const mapService = Container.get<MapService>(MapService);
     const spawnArea: Area = mapService.getSpawnableArea(0);
     const nickname = player.nickname;
-    const speciesInfo: Species = global.assert(SPECIES_ASSET.get(player.speciesId));
+    const speciesInfo: Species | undefined = SPECIES_ASSET.get(player.speciesId);
+    if (speciesInfo === undefined) throw new Error("Invalid Player Infomation");
     const myInfo: Player = createBuilder(Player)
       .setPlayerId(this.count++)
       .setNickname(nickname)
