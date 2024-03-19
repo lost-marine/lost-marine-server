@@ -9,8 +9,15 @@ import { PlayerService } from "@/services/player";
 import Container from "typedi";
 import { PlanktonService } from "@/services/plankton";
 import { PLANKTON_SPAWN_LIST } from "@/constants/spawnList";
-import { type PlayerResponse, type ValidateRespone } from "@/types";
-import assert from "node:assert";
+import {
+  type Species,
+  type ChatMessageSendResponse,
+  type PlayerResponse,
+  type ValidateRespone,
+  type ChatMessageReceiveRequest
+} from "@/types";
+import { recordEnsure, typeEnsure } from "@/util/assert";
+import { SPECIES_ASSET } from "@/constants/asset";
 
 let io: Server, serverSocket: Socket, clientSocket: clientSock;
 let tester: Player;
@@ -24,7 +31,7 @@ beforeAll((done) => {
   Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
   planktonManager = Container.get<PlanktonService>(PlanktonService);
   playerService = Container.get<PlayerService>(PlayerService);
-  tester = createBuilder(Player).setCenterX(0).setCenterY(0).setNickname("rhemeddj@!23").setPoint(5000).setSpeciesId(1).build();
+  tester = createBuilder(Player).setCenterX(0).setCenterY(0).setNickname("rhemedd").setPoint(5000).setSpeciesId(1).build();
   io = new Server(httpServer);
   httpServer.listen(() => {
     const port: number = (httpServer.address() as AddressInfo).port;
@@ -71,13 +78,13 @@ describe("socket test", () => {
       expect(nicknameValidator).toBeCalledWith(tester.nickname);
       expect(nicknameValidator).toBeCalledTimes(1);
       expect(nicknameValidator).toHaveReturned();
-      expect(nicknameValidator.mock.results[0]?.value.isSuccess).toBeFalsy();
+      expect(nicknameValidator.mock.results[0]?.value.isSuccess).toBeTruthy();
       jest.clearAllMocks();
     });
   });
 
   test.only("player-enter", async () => {
-    clientSocket.emit("player-enter", undefined, (res: any) => {
+    clientSocket.emit("player-enter", tester, (res: any) => {
       console.log(res);
     });
 
@@ -92,7 +99,7 @@ describe("socket test", () => {
       };
 
       try {
-        assert(player);
+        typeEnsure(player);
         if (playerService.validateNickName(player.nickname).isSuccess) {
           void serverSocket.join("000");
           gameStartReq = playerService.addPlayer(player, serverSocket.id);
@@ -108,7 +115,7 @@ describe("socket test", () => {
       }
 
       expect(validResponse.isSuccess).toBeTruthy();
-      expect(validResponse.msg).toBe("잘못된 닉네임입니다.");
+      expect(validResponse.msg).toBe("플레이어 입장 성공!");
     });
   });
 
@@ -118,5 +125,38 @@ describe("socket test", () => {
     expect(evolutionHandler).toBeCalledWith(7, tester);
     expect(evolutionHandler).toBeCalledTimes(1);
     expect(evolutionHandler).toHaveReturned();
+  });
+
+  test.only("chat-message-send", async () => {
+    clientSocket.emit("chat-message-send", { playerId: 0, msg: "ddddd" });
+    await onceSocketConnected(serverSocket, "chat-message-send").then((data: ChatMessageSendResponse) => {
+      const response: ValidateRespone = {
+        isSuccess: false,
+        msg: "유효하지 않은 플레이어입니다."
+      };
+      try {
+        recordEnsure(data);
+        const sender: Player = typeEnsure(global.playerList.get(data.playerId));
+        const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(sender.speciesId));
+        console.log("ddd");
+        response.isSuccess = true;
+        response.msg = "채팅을 성공적으로 전달합니다.";
+
+        const sendFormat: ChatMessageReceiveRequest = {
+          speciesname: targetSpecies.name,
+          playerId: data.playerId,
+          nickname: sender.nickname,
+          timeStamp: Date.now(),
+          msg: data.msg
+        };
+
+        console.log(sendFormat);
+      } catch (error: unknown) {
+        response.isSuccess = false;
+        response.msg = error instanceof Error ? error.message : "채팅 전송에 실패했습니다.";
+      } finally {
+        console.log(response);
+      }
+    });
   });
 });

@@ -46,7 +46,7 @@ export class PlayerService {
       .setSocketId(socketId)
       .setSpeciesId(player.speciesId)
       .build();
-    console.log(myInfo);
+
     return myInfo;
   }
 
@@ -130,6 +130,7 @@ export class PlayerService {
   addPlayer(player: Player, socketId: string): PlayerResponse {
     const myInfo = this.initPlayer(player, socketId);
     global.playerList?.set(myInfo.playerId, myInfo);
+    console.log(global.playerList);
     const playerList = this.getPlayerList();
 
     const result: PlayerResponse = {
