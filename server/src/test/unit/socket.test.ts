@@ -95,6 +95,7 @@ describe("socket test", () => {
         if (playerService.validateNickName(player.nickname).isSuccess) {
           void serverSocket.join("000");
           gameStartReq = playerService.addPlayer(player, serverSocket.id);
+          console.log(gameStartReq);
         } else {
           throw new Error("잘못된 닉네임입니다.");
         }
