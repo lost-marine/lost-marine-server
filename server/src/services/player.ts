@@ -64,7 +64,7 @@ export class PlayerService {
    * @returns {boolean}
    */
   validateNickName(nickname: string): ValidateRespone {
-    const regexp: RegExp = /^[가-힣A-Za-z0-9]{2,12}$/;
+    const regexp: RegExp = /^[ㄱ-ㅎㅏ-ㅣ가-힣A-Za-z0-9]{2,12}$/;
     let isSuccess: boolean = regexp.test(nickname);
     let msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
     // 닉네임 중복 검사
