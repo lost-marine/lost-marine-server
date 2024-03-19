@@ -6,18 +6,12 @@ type GlobalStore = {
   playerList: null | Map<number, Player>;
   planktonList: null | Map<number, Plankton>;
   planktonTree: null | RBush<TPlankton>;
-  assert: (param: unknown) => asserts param;
 };
 
 const global: GlobalStore = {
   playerList: null,
   planktonList: null,
-  planktonTree: null,
-  assert: function (condition: unknown, message?: string): asserts condition {
-    if (condition === undefined || condition === null) {
-      throw new Error(message ?? "Invalid type");
-    }
-  }
+  planktonTree: null
 };
 
 export default global;
