@@ -15,7 +15,6 @@ import { type Area } from "@/classes/area";
 import { createBuilder } from "@/util/builder";
 // import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 import { validateCanCrushArea } from "@/util/crushValid";
-import { type Area } from "@/classes/area";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
@@ -171,28 +170,22 @@ export class PlayerService {
    * @author 양소영
    *
    * @param {PlayerCrashRequest} data
-   * @returns {ValidateRespone}
    */
-  isCrashValidate(request: PlayerCrashRequest): ValidateRespone {
-    let isSuccess: boolean = true;
-    let msg: string = "플레이어 충돌 검증 결과 성공했습니다";
-    console.log(request.playerAId + " " + request.playerBId);
-
+  isCrashValidate(request: PlayerCrashRequest): void {
     // 플레이어 두 명이 playerList에 존재하는지 검증
-    if (global.playerList.get(request.playerAId) === undefined || global.playerList.get(request.playerBId) === undefined) {
-      isSuccess = false;
-      msg = "플레이어가 존재하지 않습니다";
+    if (
+      request === undefined ||
+      global.playerList.get(request.playerAId) === undefined ||
+      global.playerList.get(request.playerBId) === undefined
+    ) {
+      throw new Error("ATTACK_PLAYER_NO_EXIST_ERROR");
     }
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
-    if (isSuccess) {
-      const firstPlayer: Player = global.playerList.get(request.playerAId);
-      const secondPlayer: Player = global.playerList.get(request.playerBId);
-      if (!validateCanCrushArea(firstPlayer.playerToArea(), secondPlayer.playerToArea())) {
-        msg = "플레이어는 충돌 가능 영역에 존재하지 않습니다.";
-      }
+    const firstPlayer: Player = global.playerList.get(request.playerAId);
+    const secondPlayer: Player = global.playerList.get(request.playerBId);
+    if (!validateCanCrushArea(firstPlayer.playerToArea(), secondPlayer.playerToArea())) {
+      throw new Error("ATTACK_PLAYER_NO_COLLISION_AREA");
     }
-
-    return { isSuccess, msg };
   }
 
   /**

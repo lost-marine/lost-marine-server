@@ -78,7 +78,8 @@
   init.addEventListener("click", function (e) {
     e.preventDefault();
     var test = {
-      nickname: input.value
+      nickname: input.value,
+      speciesId: 1
     };
 
     socket.emit("player-enter", test, (response) => {
