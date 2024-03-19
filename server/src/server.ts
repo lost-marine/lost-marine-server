@@ -15,14 +15,15 @@ import {
   type ChatMessageSendResponse,
   type ChatMessageReceiveRequest,
   type PlayerAttackResponse,
-  type Species
+  type Species,
+  type evolveRequest
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
 import { PLANKTON_SPAWN_LIST } from "./constants/spawnList";
 import { SPECIES_ASSET } from "./constants/asset";
 import { typeEnsure, recordEnsure } from "@/util/assert";
-
+import g from "@/types/global";
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
 const endpoint: string = "localhost";
@@ -68,7 +69,7 @@ Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
 io.on("connection", (socket: Socket) => {
   const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
-  if (global.playerList?.size === 0) {
+  if (g.playerList?.size === 0) {
     planktonManager.initPlankton();
   }
 
@@ -96,7 +97,7 @@ io.on("connection", (socket: Socket) => {
     };
     let gameStartReq: PlayerResponse = {
       myInfo: player,
-      playerList: global.playerList
+      playerList: Array.from(g.playerList.values())
     };
 
     try {
@@ -113,21 +114,31 @@ io.on("connection", (socket: Socket) => {
       };
     } finally {
       callback(validResponse);
+
       if (validResponse.isSuccess) {
-        const planktonList: Plankton[] = [...global.planktonList.values()];
+        const planktonList: Plankton[] = Array.from(g.planktonList.values());
         sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
         sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
       }
     }
   });
   // 진화요청(Client→ Server)
-  socket.on("player-evolution", (player: Player, callback) => {
+  socket.on("player-evolution", (data: evolveRequest, callback) => {
     let validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: "진화에 성공했습니다."
     };
+
     try {
-      validateResponse = playerService.validateEvolution(player);
+      recordEnsure(data);
+      const beforeEvolvePlayer: Player = typeEnsure(g.playerList.get(data.playerId));
+      validateResponse = playerService.validateEvolution(data.speciesId, beforeEvolvePlayer);
+      if (validateResponse.isSuccess) {
+        playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
+        const { socketId, ...playerResponse } = beforeEvolvePlayer;
+        g.playerList.set(data.playerId, beforeEvolvePlayer);
+        sendToMe(beforeEvolvePlayer.socketId, "player-status-sync", playerResponse);
+      }
     } catch (error: unknown) {
       validateResponse.isSuccess = false;
       validateResponse.msg = error instanceof Error ? error.message : "진화에 실패했습니다.";
@@ -190,8 +201,16 @@ io.on("connection", (socket: Socket) => {
 
   // 플레이어 간 공격
   socket.on("player-crash", (data: PlayerCrashRequest, callback) => {
+    let validateResponse: ValidateRespone = {
+      isSuccess: true,
+      msg: "공격에 성공했습니다."
+    };
     try {
-      const validateResponse: ValidateRespone = playerService.isCrashValidate(recordEnsure(data));
+      validateResponse = playerService.isCrashValidate(recordEnsure(data));
+    } catch (error: unknown) {
+      validateResponse.isSuccess = false;
+      validateResponse.msg = error instanceof Error ? error.message : "공격에 실패했습니다.";
+    } finally {
       callback(validateResponse);
 
       // 충돌 검증이 성공적인 경우만 공격 시도
@@ -212,7 +231,7 @@ io.on("connection", (socket: Socket) => {
           }
         });
       }
-    } catch (error) {}
+    }
   });
 
   socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
@@ -220,28 +239,38 @@ io.on("connection", (socket: Socket) => {
       isSuccess: false,
       msg: "유효하지 않은 플레이어입니다."
     };
+    let sendFormat: ChatMessageReceiveRequest = {
+      speciesname: "",
+      playerId: -1,
+      nickname: "",
+      timeStamp: Date.now(),
+      msg: ""
+    };
+
     try {
       recordEnsure(data);
-      const sender: Player = typeEnsure(global.playerList.get(data.playerId));
+      const sender: Player = typeEnsure(g.playerList.get(data.playerId));
       const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(sender.speciesId));
 
       response.isSuccess = true;
       response.msg = "채팅을 성공적으로 전달합니다.";
 
-      const sendFormat: ChatMessageReceiveRequest = {
+      sendFormat = {
         speciesname: targetSpecies.name,
         playerId: data.playerId,
         nickname: sender.nickname,
         timeStamp: Date.now(),
         msg: data.msg
       };
-
-      sendToAll("chat-message-receive", sendFormat);
     } catch (error: unknown) {
       response.isSuccess = false;
       response.msg = error instanceof Error ? error.message : "채팅 전송에 실패했습니다.";
     } finally {
       callback(response);
+
+      if (response.isSuccess) {
+        sendToAll("chat-message-receive", sendFormat);
+      }
     }
   });
 });
