@@ -77,7 +77,7 @@ describe("socket test", () => {
   });
 
   test.only("player-enter", async () => {
-    clientSocket.emit("player-enter", tester, (res: any) => {
+    clientSocket.emit("player-enter", undefined, (res: any) => {
       console.log(res);
     });
 
@@ -107,7 +107,7 @@ describe("socket test", () => {
         };
       }
 
-      expect(validResponse.isSuccess).toBeFalsy();
+      expect(validResponse.isSuccess).toBeTruthy();
       expect(validResponse.msg).toBe("잘못된 닉네임입니다.");
     });
   });
