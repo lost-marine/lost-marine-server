@@ -155,7 +155,7 @@ export class PlayerService {
   updatePlayerInfo(player: Player): Player[] {
     const playerId = player.playerId;
     // 플레이어 존재하는 경우에만
-    if (global.playerList.has(player) === true) {
+    if (global.playerList.has(playerId) === true) {
       const item: Player = global.playerList?.get(playerId);
       item?.updatePlayerInfo(player);
       global.playerList?.set(playerId, item);
