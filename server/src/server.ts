@@ -79,21 +79,37 @@ io.on("connection", (socket: Socket) => {
 
   // 참가자 본인 입장(소켓 연결)
   socket.on("player-enter", (player: Player, callback) => {
-    const validateResponse: ValidateRespone = playerService.validateNickName(player.nickname);
-    callback(validateResponse);
+    let validResponse: ValidateRespone = {
+      isSuccess: true,
+      msg: "플레이어 입장 성공!"
+    };
+    let gameStartReq: PlayerResponse = {
+      myInfo: player,
+      playerList: global.playerList
+    };
 
-    // 닉네임 검증
-    if (validateResponse.isSuccess) {
-      // 성공한 경우에만 플레이어 추가
-      void socket.join(roomId);
-      console.log("룸에 들어오게 처리함");
-      const response: PlayerResponse = playerService.addPlayer(player, socket.id);
-      const planktonList: Plankton[] = [...global.planktonList.values()];
-      sendWithoutMe(socket, "player-enter", response.myInfo);
-      sendToMe(socket.id, "game-start", { ...response, planktonList } satisfies GameStartData);
+    try {
+      global.assert(player);
+      if (playerService.validateNickName(player.nickname).isSuccess) {
+        void socket.join(roomId);
+        gameStartReq = playerService.addPlayer(player, socket.id);
+      } else {
+        throw new Error("잘못된 닉네임입니다.");
+      }
+    } catch (error: unknown) {
+      validResponse = {
+        isSuccess: false,
+        msg: error instanceof Error ? error.message : "알 수 없는 이유로 실패하였습니다."
+      };
+    } finally {
+      callback(validResponse);
+      if (validResponse.isSuccess) {
+        const planktonList: Plankton[] = [...global.planktonList.values()];
+        sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
+        sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+      }
     }
   });
-
   // 진화요청(Client→ Server)
   socket.on("player-evolution", (player: Player, callback) => {
     const validateResponse: ValidateRespone = playerService.validateEvolution(player);

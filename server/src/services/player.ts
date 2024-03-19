@@ -39,6 +39,7 @@ export class PlayerService {
     const mapService = Container.get<MapService>(MapService);
     const spawnArea: Area = mapService.getSpawnableArea(0);
     const nickname = player.nickname;
+    const speciesInfo: Species = global.assert(SPECIES_ASSET.get(player.speciesId));
     const myInfo: Player = createBuilder(Player)
       .setPlayerId(this.count++)
       .setNickname(nickname)
@@ -46,6 +47,8 @@ export class PlayerService {
       .setCenterY(spawnArea.centerY)
       .setSocketId(socketId)
       .setSpeciesId(player.speciesId)
+      .setWidth(speciesInfo.width)
+      .setHeight(speciesInfo.height)
       .build();
     console.log(myInfo);
     return myInfo;
