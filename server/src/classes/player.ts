@@ -1,7 +1,7 @@
 import { Creature } from "@/classes/creature";
 import { createBuilder } from "@/util/builder";
 import { Area } from "./area";
-import { type Species } from "@/types";
+import { type PlayerAttackResponse, type Species } from "@/types";
 
 export class Player extends Creature {
   [x: string]: any;
@@ -84,5 +84,25 @@ export class Player extends Creature {
       .setDirection(this.direction)
       .build();
     return playterArea;
+  }
+
+  /**
+   * Player 정보를 PlayerAttackResponse에 넣어줌
+   * @date 3/19/2024 - 4:15:32 PM
+   * @author 양소영
+   *
+   * @returns {PlayerAttackResponse}
+   */
+  toPlayerAttackResponse(): PlayerAttackResponse {
+    const playerResponse: PlayerAttackResponse = {
+      playerId: this.playerId,
+      health: this.health,
+      point: this.point,
+      centerX: this.centerX,
+      centerY: this.centerY,
+      isGameOver: this.isGameOver,
+      socketId: this.socketId
+    };
+    return playerResponse;
   }
 }

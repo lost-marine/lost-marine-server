@@ -50,8 +50,6 @@ export function isAttacking(areaA: Area, areaB: Area): boolean {
       break;
   }
 
-  console.log(centerX + ", " + centerY);
-
   const playerAMouth = Bodies.circle(centerX, centerY, 5).bounds;
 
   const playerBArea = Bodies.rectangle(areaB.centerX, areaB.centerY, areaB.width, areaB.height, {
