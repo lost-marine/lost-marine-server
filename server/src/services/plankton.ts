@@ -7,6 +7,8 @@ import { PlayerService } from "./player";
 import { type PlanktonEatResponse } from "@/types";
 import { type Area } from "@/classes/area";
 import { MapService } from "./map";
+import g from "@/types/global";
+import { typeEnsure } from "@/util/assert";
 
 @Service()
 export class PlanktonService {
@@ -31,9 +33,9 @@ export class PlanktonService {
    * @private
    */
   constructor() {
-    global.planktonTree = new RBush();
+    g.planktonTree = new RBush();
     this.idCounter = 1;
-    global.planktonList = new Map();
+    g.planktonList = new Map();
     this.eatedPlanktonCnt = 0;
   }
 
@@ -43,8 +45,8 @@ export class PlanktonService {
    * @author 박연서
    */
   initPlankton(): void {
-    global.planktonTree?.clear();
-    global.planktonList?.clear();
+    g.planktonTree?.clear();
+    g.planktonList?.clear();
     this.idCounter = 1;
     this.eatedPlanktonCnt = 0;
 
@@ -58,8 +60,8 @@ export class PlanktonService {
         .setPlanktonId(this.idCounter)
         .build();
 
-      global.planktonList?.set(this.idCounter, plankton);
-      global.planktonTree?.insert(plankton.makeTplanktonType());
+      g.planktonList?.set(this.idCounter, plankton);
+      g.planktonTree?.insert(plankton.makeTplanktonType());
       this.idCounter++;
     }
   }
@@ -74,10 +76,10 @@ export class PlanktonService {
    * @returns {number}
    */
   eatedPlankton(planktonId: number, playerId: number): PlanktonEatResponse {
-    if (global.planktonList != null && Boolean(global.planktonList.has(planktonId))) {
-      const planktonInfo: Plankton = global.planktonList.get(planktonId);
-      global.planktonList?.delete(planktonId);
-      global.planktonTree?.remove(planktonInfo.makeTplanktonType());
+    if (g.planktonList != null && Boolean(g.planktonList.has(planktonId))) {
+      const planktonInfo: Plankton = typeEnsure(g.planktonList.get(planktonId));
+      g.planktonList?.delete(planktonId);
+      g.planktonTree?.remove(planktonInfo.makeTplanktonType());
       this.eatedPlanktonCnt++;
 
       const playerService = Container.get<PlayerService>(PlayerService);
@@ -113,8 +115,8 @@ export class PlanktonService {
         .setPlanktonId(this.idCounter)
         .build();
 
-      global.planktonList?.set(this.idCounter, plankton);
-      global.planktonTree?.insert(plankton.makeTplanktonType());
+      g.planktonList?.set(this.idCounter, plankton);
+      g.planktonTree?.insert(plankton.makeTplanktonType());
       this.idCounter++;
       responedPlankton.push(plankton);
     }

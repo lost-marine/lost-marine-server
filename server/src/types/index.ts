@@ -65,3 +65,9 @@ export type ChatMessageReceiveRequest = {
   nickname: string;
   timeStamp: number;
 } & ChatMessageSendResponse;
+
+export type evolveRequest = {
+  speciesId: number;
+  playerId: number;
+  point: number;
+};

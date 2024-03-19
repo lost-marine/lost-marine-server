@@ -2,6 +2,7 @@ import { Service } from "typedi";
 import { type Area } from "@/classes/area";
 import { CircularQueue } from "@/util/circularQueue";
 import { validateCanCrushArea } from "@/util/crushValid";
+import g from "@/types/global";
 
 @Service()
 export class MapService {
@@ -42,7 +43,7 @@ export class MapService {
    */
   validatePlayerSpawn(area: Area): boolean {
     let flag: boolean = true;
-    global.playerList?.forEach((player) => {
+    g.playerList?.forEach((player) => {
       const existedArea: Area = player.playerToArea();
       if (validateCanCrushArea(existedArea, area)) {
         console.log("해당 위치에 플레이어가 스폰되면 안됩니다. 스폰 위치 스킵.");
@@ -61,7 +62,7 @@ export class MapService {
    * @returns {boolean}
    */
   validatePlanktonSpawn(area: Area): boolean {
-    const flag = global.planktonTree?.collides({
+    const flag = g.planktonTree?.collides({
       minX: area.centerX - 3,
       minY: area.centerY - 3,
       maxX: area.centerX + 3,

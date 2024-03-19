@@ -15,7 +15,8 @@ import {
   type ChatMessageSendResponse,
   type ChatMessageReceiveRequest,
   type PlayerAttackResponse,
-  type Species
+  type Species,
+  type evolveRequest
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -23,7 +24,7 @@ import { PLANKTON_SPAWN_LIST } from "./constants/spawnList";
 import { SPECIES_ASSET } from "./constants/asset";
 import { getErrorMessage, getSuccessMessage } from "./message/message-handler";
 import { typeEnsure, recordEnsure } from "@/util/assert";
-import g from "@/types/global"
+import g from "@/types/global";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -124,13 +125,22 @@ io.on("connection", (socket: Socket) => {
     }
   });
   // 진화요청(Client→ Server)
-  socket.on("player-evolution", (player: Player, callback) => {
+  socket.on("player-evolution", (data: evolveRequest, callback) => {
     let validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: "진화에 성공했습니다."
     };
+
     try {
-      validateResponse = playerService.validateEvolution(player);
+      recordEnsure(data);
+      const beforeEvolvePlayer: Player = typeEnsure(g.playerList.get(data.playerId));
+      validateResponse = playerService.validateEvolution(data.speciesId, beforeEvolvePlayer);
+      if (validateResponse.isSuccess) {
+        playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
+        const { socketId, ...playerResponse } = beforeEvolvePlayer;
+        g.playerList.set(data.playerId, beforeEvolvePlayer);
+        sendToMe(beforeEvolvePlayer.socketId, "player-status-sync", playerResponse);
+      }
     } catch (error: unknown) {
       validateResponse.isSuccess = false;
       validateResponse.msg = error instanceof Error ? error.message : "진화에 실패했습니다.";
@@ -205,12 +215,13 @@ io.on("connection", (socket: Socket) => {
       validateResponse.msg = getErrorMessage(error);
     } finally {
       callback(validateResponse);
-    
+    }
 
-      // 충돌 검증이 성공적인 경우만 공격 시도
-      if (validateResponse.isSuccess) {
-        const result: PlayerAttackResponse[] = playerService.attackPlayer(data);
+    // 충돌 검증이 성공적인 경우만 공격 시도
+    if (validateResponse.isSuccess) {
+      const result: PlayerAttackResponse[] | undefined = playerService.attackPlayer(data);
 
+      if (result !== undefined && result.length === 2) {
         // 플레이어 상태 정보 수정
         result.forEach((player) => {
           const mySocketId: string = player.socketId;
@@ -219,7 +230,8 @@ io.on("connection", (socket: Socket) => {
 
           // 게임 오버인 경우
           if (player.isGameOver) {
-            sendToMe(player.socketId, "game-over", playerService.getGameOver(player));
+            console.log("game-over");
+            sendToMe(player.socketId, "game-over", playerService.getGameOver(result));
             sendWithoutMe(socket, "player-quit", player.playerId);
             playerService.deletePlayerByPlayerId(player.playerId);
           }
@@ -233,6 +245,14 @@ io.on("connection", (socket: Socket) => {
       isSuccess: false,
       msg: "유효하지 않은 플레이어입니다."
     };
+    let sendFormat: ChatMessageReceiveRequest = {
+      speciesname: "",
+      playerId: -1,
+      nickname: "",
+      timeStamp: Date.now(),
+      msg: ""
+    };
+
     try {
       recordEnsure(data);
       const sender: Player = typeEnsure(g.playerList.get(data.playerId));
@@ -241,20 +261,22 @@ io.on("connection", (socket: Socket) => {
       response.isSuccess = true;
       response.msg = "채팅을 성공적으로 전달합니다.";
 
-      const sendFormat: ChatMessageReceiveRequest = {
+      sendFormat = {
         speciesname: targetSpecies.name,
         playerId: data.playerId,
         nickname: sender.nickname,
         timeStamp: Date.now(),
         msg: data.msg
       };
-
-      sendToAll("chat-message-receive", sendFormat);
     } catch (error: unknown) {
       response.isSuccess = false;
       response.msg = error instanceof Error ? error.message : "채팅 전송에 실패했습니다.";
     } finally {
       callback(response);
+
+      if (response.isSuccess) {
+        sendToAll("chat-message-receive", sendFormat);
+      }
     }
   });
 });
