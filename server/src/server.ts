@@ -21,6 +21,7 @@ import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
 import { PLANKTON_SPAWN_LIST } from "./constants/spawnList";
 import { SPECIES_ASSET } from "./constants/asset";
+import assert from "assert";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -89,7 +90,7 @@ io.on("connection", (socket: Socket) => {
     };
 
     try {
-      global.assert(player);
+      assert(player);
       if (playerService.validateNickName(player.nickname).isSuccess) {
         void socket.join(roomId);
         gameStartReq = playerService.addPlayer(player, socket.id);
