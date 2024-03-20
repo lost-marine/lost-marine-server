@@ -79,13 +79,13 @@ io.on("connection", (socket: Socket) => {
   socket.on("nickname-validate", (nickname: string, callback) => {
     let validateResponse: ValidateRespone = {
       isSuccess: true,
-      msg: "닉네임 확인 되었습니다."
+      msg: getSuccessMessage("NICKNAME_VALIDATE_SUCCESS")
     };
     try {
-      validateResponse = playerService.validateNickName(typeEnsure(nickname));
+      validateResponse = playerService.validateNickName(typeEnsure(nickname, "INVALID_INPUT"));
     } catch (error: unknown) {
       validateResponse.isSuccess = false;
-      validateResponse.msg = error instanceof Error ? error.message : "Invalid Input Type";
+      validateResponse.msg = getErrorMessage(error);
     } finally {
       callback(validateResponse);
     }
@@ -93,9 +93,9 @@ io.on("connection", (socket: Socket) => {
 
   // 참가자 본인 입장(소켓 연결)
   socket.on("player-enter", (player: Player, callback) => {
-    let validResponse: ValidateRespone = {
+    const validResponse: ValidateRespone = {
       isSuccess: true,
-      msg: "플레이어 입장 성공!"
+      msg: getSuccessMessage("PLAYER_ENTER_SUCCESS")
     };
     let gameStartReq: PlayerResponse = {
       myInfo: player,
@@ -103,17 +103,15 @@ io.on("connection", (socket: Socket) => {
     };
 
     try {
-      if (playerService.validateNickName(typeEnsure(player).nickname).isSuccess) {
+      if (playerService.validateNickName(typeEnsure(player, "INVALID_INPUT").nickname).isSuccess) {
         void socket.join(roomId);
         gameStartReq = playerService.addPlayer(player, socket.id);
       } else {
-        throw new Error("올바르지 않은 닉네임입니다.");
+        throw new Error("INVALID_INPUT");
       }
     } catch (error: unknown) {
-      validResponse = {
-        isSuccess: false,
-        msg: error instanceof Error ? error.message : "Invalid Input Type"
-      };
+      validResponse.isSuccess = false;
+      validResponse.msg = getErrorMessage(error);
     } finally {
       callback(validResponse);
 
@@ -128,12 +126,12 @@ io.on("connection", (socket: Socket) => {
   socket.on("player-evolution", (data: evolveRequest, callback) => {
     let validateResponse: ValidateRespone = {
       isSuccess: true,
-      msg: "진화에 성공했습니다."
+      msg: getSuccessMessage("PLAYER_EVOLVE_SUCCESS")
     };
 
     try {
-      recordEnsure(data);
-      const beforeEvolvePlayer: Player = typeEnsure(g.playerList.get(data.playerId));
+      recordEnsure(data, "INVALID_INPUT");
+      const beforeEvolvePlayer: Player = typeEnsure(g.playerList.get(data.playerId), "CANNOT_FIND_PLAYER");
       validateResponse = playerService.validateEvolution(data.speciesId, beforeEvolvePlayer);
       if (validateResponse.isSuccess) {
         playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
@@ -143,7 +141,7 @@ io.on("connection", (socket: Socket) => {
       }
     } catch (error: unknown) {
       validateResponse.isSuccess = false;
-      validateResponse.msg = error instanceof Error ? error.message : "진화에 실패했습니다.";
+      validateResponse.msg = getErrorMessage(error);
     } finally {
       callback(validateResponse);
     }
@@ -165,10 +163,11 @@ io.on("connection", (socket: Socket) => {
 
   // 플레이어 본인 퇴장
   socket.on("player-quit", (playerId: number) => {
-    try {
-      playerService.deletePlayerByPlayerId(typeEnsure(playerId));
-      sendWithoutMe(socket, "player-quit", playerId);
-    } catch (error) {}
+    playerService.deletePlayerByPlayerId(typeEnsure(playerId));
+    sendWithoutMe(socket, "player-quit", playerId);
+
+    // playerId가 올바른 input이 아니라면 어떻게 해야할지
+    // 논의가 필요합니다.
   });
 
   // 새로고침이나 창닫음으로 연결이 끊기는 경우
@@ -181,14 +180,14 @@ io.on("connection", (socket: Socket) => {
   socket.on("plankton-eat", (data: { playerId: number; planktonId: number }, callback) => {
     let result: PlanktonEatResponse = {
       isSuccess: true,
-      msg: "섭취에 성공했습니다."
+      msg: getSuccessMessage("EAT_PLANKTON_SUCCESS")
     };
     try {
-      recordEnsure(data);
+      recordEnsure(data, "INVALID_INPUT");
       result = planktonManager.eatedPlankton(data.planktonId, data.playerId);
     } catch (error: unknown) {
       result.isSuccess = false;
-      result.msg = "Invalid Data Type";
+      result.msg = getErrorMessage(error);
     } finally {
       callback(result);
       if (result.isSuccess) {
@@ -254,9 +253,9 @@ io.on("connection", (socket: Socket) => {
     };
 
     try {
-      recordEnsure(data);
-      const sender: Player = typeEnsure(g.playerList.get(data.playerId));
-      const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(sender.speciesId));
+      recordEnsure(data, "INVALID_INPUT");
+      const sender: Player = typeEnsure(g.playerList.get(data.playerId), "CANNOT_FIND_PLAYER");
+      const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(sender.speciesId), "CANNOT_FIND_TIER");
 
       response.isSuccess = true;
       response.msg = "채팅을 성공적으로 전달합니다.";
@@ -270,7 +269,7 @@ io.on("connection", (socket: Socket) => {
       };
     } catch (error: unknown) {
       response.isSuccess = false;
-      response.msg = error instanceof Error ? error.message : "채팅 전송에 실패했습니다.";
+      response.msg = getErrorMessage(error);
     } finally {
       callback(response);
 

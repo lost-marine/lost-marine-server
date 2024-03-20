@@ -20,6 +20,7 @@ import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
 import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
+import { getSuccessMessage } from "@/message/message-handler";
 @Service()
 export class PlayerService {
   count: number;
@@ -99,20 +100,19 @@ export class PlayerService {
   validateEvolution(targetSpeciesId: number, player: Player): ValidateRespone {
     for (const rule of evolutionHandler.rules) {
       if (!rule.match(targetSpeciesId, player)) {
-        return rule.action(targetSpeciesId, player);
+        rule.action(targetSpeciesId, player);
       }
     }
     return {
       isSuccess: true,
-      msg: "진화가 가능합니다."
+      msg: getSuccessMessage("EVOLUTION_VALIDATE_SUCCESS")
     };
   }
 
   playerEvolution(targetSpeciesId: number, player: Player): void {
-    const targetSpecies: Species | undefined = SPECIES_ASSET.get(targetSpeciesId);
-    if (targetSpecies !== undefined) {
-      player.evolutePlayer(targetSpecies);
-    }
+    const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(targetSpeciesId), "CANNOT_FIND_TIER");
+
+    player.evolutePlayer(targetSpecies);
   }
 
   /**
@@ -157,7 +157,7 @@ export class PlayerService {
     const playerId = player.playerId;
     // 플레이어 존재하는 경우에만
     if (g.playerList.has(playerId)) {
-      const item: Player = typeEnsure(g.playerList.get(playerId));
+      const item: Player = typeEnsure(g.playerList.get(playerId), "CANNOT_FIND_PLAYER");
       item?.updatePlayerInfo(player);
       g.playerList?.set(playerId, item);
     }
@@ -198,8 +198,8 @@ export class PlayerService {
    * @returns {Player[]}
    */
   attackPlayer(request: PlayerCrashRequest): PlayerAttackResponse[] | undefined {
-    const playerA: Player = typeEnsure(g.playerList.get(request.playerAId));
-    const playerB: Player = typeEnsure(g.playerList.get(request.playerBId));
+    const playerA: Player = typeEnsure(g.playerList.get(request.playerAId), "CANNOT_FIND_PLAYER");
+    const playerB: Player = typeEnsure(g.playerList.get(request.playerBId), "CANNOT_FIND_PLAYER");
 
     const areaA: Area = playerA.playerToArea();
     const areaB: Area = playerB.playerToArea();
@@ -221,8 +221,8 @@ export class PlayerService {
    * @returns {plyaerGameOverResponse}
    */
   getGameOver(playerList: PlayerAttackResponse[]): plyaerGameOverResponse {
-    const attackPlayer: Player = typeEnsure(g.playerList.get(playerList[0].playerId));
-    const gameoverPlayer: Player = typeEnsure(g.playerList.get(playerList[1].playerId));
+    const attackPlayer: Player = typeEnsure(g.playerList.get(playerList[0].playerId), "CANNOT_FIND_PLAYER");
+    const gameoverPlayer: Player = typeEnsure(g.playerList.get(playerList[1].playerId), "CANNOT_FIND_PLAYER");
 
     const response: plyaerGameOverResponse = {
       playerId: gameoverPlayer.playerId,
@@ -249,7 +249,7 @@ export class PlayerService {
    * @param {number} planktonId
    */
   eatPlankton(playerId: number): Player {
-    const player: Player = typeEnsure(g.playerList?.get(playerId));
+    const player: Player = typeEnsure(g.playerList?.get(playerId), "CANNOT_FIND_PLAYER");
 
     if (player !== undefined) {
       player.planktonCount++;

@@ -1,6 +1,6 @@
 import { type Player } from "@/classes/player";
 import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
-import { type ValidateRespone, type Species } from "@/types";
+import { type Species } from "@/types";
 
 export const evolutionHandler = {
   tierCode: 0,
@@ -20,12 +20,8 @@ export const evolutionHandler = {
         }
         return targetEvolutionSpecies !== undefined;
       },
-      action: function (targetSpeciesId: number, player: Player): ValidateRespone {
-        const response: ValidateRespone = {
-          isSuccess: false,
-          msg: "존재하지 않는 개체 ID 입니다."
-        };
-        return response;
+      action: function (targetSpeciesId: number, player: Player): void {
+        throw new Error("INVALID_INPUT");
       }
     },
     {
@@ -40,12 +36,8 @@ export const evolutionHandler = {
         if (evolutionSet !== undefined) return evolutionSet.has(targetSpeciesId);
         return false;
       },
-      action: function (targetEvolutionSpeciesId: number, player: Player): ValidateRespone {
-        const response: ValidateRespone = {
-          isSuccess: false,
-          msg: "이 개체로 진화할 수 없습니다."
-        };
-        return response;
+      action: function (targetEvolutionSpeciesId: number, player: Player): void {
+        throw new Error("PLAYER_FAIL_EVOLVE");
       }
     },
     {
@@ -60,12 +52,8 @@ export const evolutionHandler = {
         if (requirementPoint !== undefined) evolutionHandler.requirePoint = requirementPoint;
         return requirementPoint !== undefined;
       },
-      action: function (targetSpeciesId: number, player: Player) {
-        const response: ValidateRespone = {
-          isSuccess: false,
-          msg: "존재하지 않는 티어입니다."
-        };
-        return response;
+      action: function (targetSpeciesId: number, player: Player): void {
+        throw new Error("CANNOT_FIND_TIER");
       }
     },
     {
@@ -78,12 +66,8 @@ export const evolutionHandler = {
       match: function (targetSpeciesId: number, player: Player): boolean {
         return player.point >= evolutionHandler.requirePoint;
       },
-      action: function (targetSpeciesId: number, player: Player): ValidateRespone {
-        const response: ValidateRespone = {
-          isSuccess: false,
-          msg: "포인트가 부족하여 진화가 불가능합니다."
-        };
-        return response;
+      action: function (targetSpeciesId: number, player: Player): void {
+        throw new Error("LACK_POINT_FOR_EVOLUTION");
       }
     }
   ]
