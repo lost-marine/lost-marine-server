@@ -15,14 +15,17 @@ import {
   type ChatMessageSendResponse,
   type ChatMessageReceiveRequest,
   type PlayerAttackResponse,
-  type Species
+  type Species,
+  type EvolveRequest,
+  type NicknameRequest
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
 import { PLANKTON_SPAWN_LIST } from "./constants/spawnList";
 import { SPECIES_ASSET } from "./constants/asset";
-import assert from "assert";
 import { getErrorMessage, getSuccessMessage } from "./message/message-handler";
+import { typeEnsure, recordEnsure } from "@/util/assert";
+import g from "@/types/global";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -58,9 +61,9 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // 플레이어 위치 싱크
-setInterval(() => {
-  sendToAll("others-position-sync", playerService.getPlayerList());
-}, 300);
+// setInterval(() => {
+//   sendToAll("others-position-sync", playerService.getPlayerList());
+// }, 300);
 
 Container.set("width", 2688);
 Container.set("height", 1536);
@@ -69,72 +72,109 @@ Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
 io.on("connection", (socket: Socket) => {
   const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
-  if (global.playerList?.size === 0) {
+  if (g.playerList?.size === 0) {
     planktonManager.initPlankton();
   }
 
   // 닉네임 확인
-  socket.on("nickname-validate", (player: Player, callback) => {
-    const validateResponse: ValidateRespone = playerService.validateNickName(player.nickname);
-    callback(validateResponse);
+  socket.on("nickname-validate", (nickname: NicknameRequest, callback) => {
+    let validateResponse: ValidateRespone = {
+      isSuccess: true,
+      msg: getSuccessMessage("NICKNAME_VALIDATE_SUCCESS")
+    };
+    try {
+      validateResponse = playerService.validateNickName(typeEnsure(nickname, "INVALID_INPUT"));
+    } catch (error: unknown) {
+      validateResponse.isSuccess = false;
+      validateResponse.msg = getErrorMessage(error);
+    } finally {
+      callback(validateResponse);
+    }
   });
 
   // 참가자 본인 입장(소켓 연결)
   socket.on("player-enter", (player: Player, callback) => {
-    let validResponse: ValidateRespone = {
+    const validResponse: ValidateRespone = {
       isSuccess: true,
-      msg: "플레이어 입장 성공!"
+      msg: getSuccessMessage("PLAYER_ENTER_SUCCESS")
     };
-    // let gameStartReq: PlayerResponse = {
-    //   myInfo: player,
-    //   playerList: global.playerList
-    // };
-    let gameStartReq: PlayerResponse | null = null;
 
     try {
-      assert(player);
-      if (playerService.validateNickName(player.nickname).isSuccess) {
+      if (playerService.validateNickName(typeEnsure(player, "INVALID_INPUT")).isSuccess) {
         void socket.join(roomId);
-        gameStartReq = playerService.addPlayer(player, socket.id);
-        console.log(gameStartReq);
+
+        playerService
+          .addPlayer(player, socket.id)
+          .then((addResult) => {
+            const gameStartReq: PlayerResponse | null = addResult;
+
+            if (gameStartReq !== null) {
+              const planktonList: Plankton[] = Array.from(g.planktonList.values());
+              sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
+              sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+            }
+          })
+          .catch((error) => {
+            console.error("값 못받아옴 ", error);
+            validResponse.isSuccess = false;
+            validResponse.msg = getErrorMessage(error);
+            callback(validResponse);
+          });
       } else {
-        throw new Error("잘못된 닉네임입니다.");
+        throw new Error("INVALID_INPUT");
       }
     } catch (error: unknown) {
-      validResponse = {
-        isSuccess: false,
-        msg: error instanceof Error ? error.message : "알 수 없는 이유로 실패하였습니다."
-      };
-    } finally {
+      validResponse.isSuccess = false;
+      validResponse.msg = getErrorMessage(error);
       callback(validResponse);
-      if (validResponse.isSuccess) {
-        const planktonList: Plankton[] = [...global.planktonList.values()];
-        if (gameStartReq != null) {
-          sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
-          sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
-        }
-      }
     }
   });
   // 진화요청(Client→ Server)
-  socket.on("player-evolution", (player: Player, callback) => {
-    const validateResponse: ValidateRespone = playerService.validateEvolution(player);
-    callback(validateResponse);
+  socket.on("player-evolution", (data: EvolveRequest, callback) => {
+    let validateResponse: ValidateRespone = {
+      isSuccess: true,
+      msg: getSuccessMessage("PLAYER_EVOLVE_SUCCESS")
+    };
+
+    try {
+      recordEnsure(data, "INVALID_INPUT");
+      const beforeEvolvePlayer: Player = typeEnsure(g.playerList.get(data.playerId), "CANNOT_FIND_PLAYER");
+      validateResponse = playerService.validateEvolution(data.speciesId, beforeEvolvePlayer);
+      if (validateResponse.isSuccess) {
+        playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
+        const { socketId, ...playerResponse } = beforeEvolvePlayer;
+        g.playerList.set(data.playerId, beforeEvolvePlayer);
+        sendToMe(beforeEvolvePlayer.socketId, "player-status-sync", playerResponse);
+      }
+    } catch (error: unknown) {
+      validateResponse.isSuccess = false;
+      validateResponse.msg = getErrorMessage(error);
+    } finally {
+      callback(validateResponse);
+    }
   });
 
   // game start
 
   // 플레이어 본인 위치 전송
   socket.on("my-position-sync", (data: Player) => {
-    const result = playerService.updatePlayerInfo(data);
-    // 다른 플레이어에게 변경사항 알려줌
-    sendWithoutMe(socket, "others-position-sync", result);
+    try {
+      const result = playerService.updatePlayerInfo(data);
+      // 다른 플레이어에게 변경사항 알려줌
+      sendWithoutMe(socket, "others-position-sync", result);
+    } catch (error) {
+      // TO-DO: 플레이어가 서버에서 관리하지 않은 미검증된 사용자의 요청인 경우
+      // 처리 방법 상의가 필요합니다.
+    }
   });
 
   // 플레이어 본인 퇴장
   socket.on("player-quit", (playerId: number) => {
-    playerService.deletePlayerByPlayerId(playerId);
+    playerService.deletePlayerByPlayerId(typeEnsure(playerId));
     sendWithoutMe(socket, "player-quit", playerId);
+
+    // playerId가 올바른 input이 아니라면 어떻게 해야할지
+    // 논의가 필요합니다.
   });
 
   // 새로고침이나 창닫음으로 연결이 끊기는 경우
@@ -145,17 +185,25 @@ io.on("connection", (socket: Socket) => {
 
   // 플랑크톤 섭취 이벤트
   socket.on("plankton-eat", (data: { playerId: number; planktonId: number }, callback) => {
-    const result: PlanktonEatResponse = planktonManager.eatedPlankton(data.planktonId, data.playerId);
-
-    callback(result);
-
-    if (result.isSuccess) {
-      sendWithoutMe(socket, "plankton-delete", data.planktonId);
-    }
-
-    if (planktonManager.eatedPlanktonCnt > 2) {
-      // respone을 위한 플랑크톤 개수 조절이 필요합니다.
-      sendToAll("plankton-respawn", planktonManager.spawnPlankton());
+    let result: PlanktonEatResponse = {
+      isSuccess: true,
+      msg: getSuccessMessage("EAT_PLANKTON_SUCCESS")
+    };
+    try {
+      recordEnsure(data, "INVALID_INPUT");
+      result = planktonManager.eatedPlankton(data.planktonId, data.playerId);
+    } catch (error: unknown) {
+      result.isSuccess = false;
+      result.msg = getErrorMessage(error);
+    } finally {
+      callback(result);
+      if (result.isSuccess) {
+        sendWithoutMe(socket, "plankton-delete", data.planktonId);
+      }
+      if (planktonManager.eatedPlanktonCnt > 2) {
+        // respone을 위한 플랑크톤 개수 조절이 필요합니다.
+        sendToAll("plankton-respawn", planktonManager.spawnPlankton());
+      }
     }
   });
 
@@ -199,28 +247,43 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
-    const check: boolean = global.playerList.has(data.playerId);
-    const targetSpecies: Species | undefined = SPECIES_ASSET.get(global.playerList.get(data.playerId).speciesId as number);
     const response: ValidateRespone = {
       isSuccess: false,
-      msg: "유효하지 않은 player 입니다."
+      msg: "유효하지 않은 플레이어입니다."
     };
-
-    if (!check || targetSpecies === undefined) {
-      callback(response);
-      return;
-    }
-
-    const playerNickname = global.playerList.get(data.playerId).nickname;
-    const sendFormat: ChatMessageReceiveRequest = {
-      speciesname: targetSpecies.name,
-      playerId: data.playerId,
-      nickname: playerNickname,
+    let sendFormat: ChatMessageReceiveRequest = {
+      speciesname: "",
+      playerId: -1,
+      nickname: "",
       timeStamp: Date.now(),
-      msg: data.msg
+      msg: ""
     };
 
-    sendToAll("chat-message-receive", sendFormat);
+    try {
+      recordEnsure(data, "INVALID_INPUT");
+      const sender: Player = typeEnsure(g.playerList.get(data.playerId), "CANNOT_FIND_PLAYER");
+      const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(sender.speciesId), "CANNOT_FIND_TIER");
+
+      response.isSuccess = true;
+      response.msg = "채팅을 성공적으로 전달합니다.";
+
+      sendFormat = {
+        speciesname: targetSpecies.name,
+        playerId: data.playerId,
+        nickname: sender.nickname,
+        timeStamp: Date.now(),
+        msg: data.msg
+      };
+    } catch (error: unknown) {
+      response.isSuccess = false;
+      response.msg = getErrorMessage(error);
+    } finally {
+      callback(response);
+
+      if (response.isSuccess) {
+        sendToAll("chat-message-receive", sendFormat);
+      }
+    }
   });
 });
 

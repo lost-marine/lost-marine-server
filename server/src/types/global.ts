@@ -1,17 +1,17 @@
 import { type Player } from "@/classes/player";
 import type { Plankton, TPlankton } from "@/classes/plankton";
-import type RBush from "rbush";
+import RBush from "rbush";
 
 type GlobalStore = {
-  playerList: null | Map<number, Player>;
-  planktonList: null | Map<number, Plankton>;
-  planktonTree: null | RBush<TPlankton>;
+  playerList: Map<number, Player>;
+  planktonList: Map<number, Plankton>;
+  planktonTree: RBush<TPlankton>;
 };
 
-const global: GlobalStore = {
-  playerList: null,
-  planktonList: null,
-  planktonTree: null
+const g: GlobalStore = {
+  playerList: new Map(),
+  planktonList: new Map(),
+  planktonTree: new RBush()
 };
 
-export default global;
+export default g;
