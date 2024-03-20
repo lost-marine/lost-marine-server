@@ -240,7 +240,7 @@ io.on("connection", (socket: Socket) => {
     }
   });
 
-  socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
+  socket.on("chat-message-send", (data: ChatMessageSendResponse) => {
     const response: ValidateRespone = {
       isSuccess: false,
       msg: "유효하지 않은 플레이어입니다."
@@ -272,7 +272,7 @@ io.on("connection", (socket: Socket) => {
       response.isSuccess = false;
       response.msg = getErrorMessage(error);
     } finally {
-      callback(response);
+      // callback(response);
 
       if (response.isSuccess) {
         sendToAll("chat-message-receive", sendFormat);
