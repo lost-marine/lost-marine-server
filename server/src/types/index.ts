@@ -35,6 +35,7 @@ export type GameStartData = {
 export type PlanktonEatResponse = {
   isSuccess: boolean;
   player?: Player;
+  msg: string;
 };
 
 export type Species = {
@@ -64,3 +65,9 @@ export type ChatMessageReceiveRequest = {
   nickname: string;
   timeStamp: number;
 } & ChatMessageSendResponse;
+
+export type evolveRequest = {
+  speciesId: number;
+  playerId: number;
+  point: number;
+};

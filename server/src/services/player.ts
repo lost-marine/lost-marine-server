@@ -18,14 +18,15 @@ import { validateCanCrushArea } from "@/util/crushValid";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
-
+import g from "@/types/global";
+import { typeEnsure } from "@/util/assert";
+import { getSuccessMessage } from "@/message/message-handler";
 @Service()
 export class PlayerService {
   count: number;
 
   constructor() {
     this.count = 0;
-    global.playerList = new Map();
   }
 
   /**
@@ -69,7 +70,7 @@ export class PlayerService {
     let msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
     // 닉네임 중복 검사
     if (isSuccess) {
-      global.playerList?.forEach((player) => {
+      g.playerList?.forEach((player) => {
         if (player?.nickname === nickname) {
           isSuccess = false;
           msg = "중복된 아이디입니다.";
@@ -98,20 +99,19 @@ export class PlayerService {
   validateEvolution(targetSpeciesId: number, player: Player): ValidateRespone {
     for (const rule of evolutionHandler.rules) {
       if (!rule.match(targetSpeciesId, player)) {
-        return rule.action(targetSpeciesId, player);
+        rule.action(targetSpeciesId, player);
       }
     }
     return {
       isSuccess: true,
-      msg: "진화가 가능합니다."
+      msg: getSuccessMessage("EVOLUTION_VALIDATE_SUCCESS")
     };
   }
 
   playerEvolution(targetSpeciesId: number, player: Player): void {
-    const targetSpecies: Species | undefined = SPECIES_ASSET.get(targetSpeciesId);
-    if (targetSpecies !== undefined) {
-      player.evolutePlayer(targetSpecies);
-    }
+    const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(targetSpeciesId), "CANNOT_FIND_TIER");
+
+    player.evolvePlayer(targetSpecies);
   }
 
   /**
@@ -121,7 +121,7 @@ export class PlayerService {
    * @returns {Player[]}
    */
   getPlayerList(): Player[] {
-    const valuesArray = Array.from(global.playerList?.values() as Iterable<Player>);
+    const valuesArray = Array.from(g.playerList?.values() as Iterable<Player>);
     return Array.from(valuesArray);
   }
 
@@ -135,7 +135,7 @@ export class PlayerService {
    */
   addPlayer(player: Player, socketId: string): PlayerResponse {
     const myInfo = this.initPlayer(player, socketId);
-    global.playerList?.set(myInfo.playerId, myInfo);
+    g.playerList?.set(myInfo.playerId, myInfo);
     const playerList = this.getPlayerList();
 
     const result: PlayerResponse = {
@@ -155,10 +155,10 @@ export class PlayerService {
   updatePlayerInfo(player: Player): Player[] {
     const playerId = player.playerId;
     // 플레이어 존재하는 경우에만
-    if (global.playerList.has(playerId) === true) {
-      const item: Player = global.playerList?.get(playerId);
+    if (g.playerList.has(playerId)) {
+      const item: Player = typeEnsure(g.playerList.get(playerId), "CANNOT_FIND_PLAYER");
       item?.updatePlayerInfo(player);
-      global.playerList?.set(playerId, item);
+      g.playerList?.set(playerId, item);
     }
 
     return this.getPlayerList();
@@ -175,14 +175,14 @@ export class PlayerService {
     // 플레이어 두 명이 playerList에 존재하는지 검증
     if (
       request === undefined ||
-      global.playerList.get(request.playerAId) === undefined ||
-      global.playerList.get(request.playerBId) === undefined
+      g.playerList.get(request.playerAId) === undefined ||
+      g.playerList.get(request.playerBId) === undefined
     ) {
       throw new Error("ATTACK_PLAYER_NO_EXIST_ERROR");
     }
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
-    const firstPlayer: Player = global.playerList.get(request.playerAId);
-    const secondPlayer: Player = global.playerList.get(request.playerBId);
+    const firstPlayer: Player = typeEnsure(g.playerList.get(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
+    const secondPlayer: Player = typeEnsure(g.playerList.get(request.playerBId), "ATTACK_PLAYER_NO_EXIST_ERROR");
     if (!validateCanCrushArea(firstPlayer.playerToArea(), secondPlayer.playerToArea())) {
       throw new Error("ATTACK_PLAYER_NO_COLLISION_AREA");
     }
@@ -197,8 +197,8 @@ export class PlayerService {
    * @returns {Player[]}
    */
   attackPlayer(request: PlayerCrashRequest): PlayerAttackResponse[] | undefined {
-    const playerA: Player = global.playerList.get(request.playerAId);
-    const playerB: Player = global.playerList.get(request.playerBId);
+    const playerA: Player = typeEnsure(g.playerList.get(request.playerAId), "CANNOT_FIND_PLAYER");
+    const playerB: Player = typeEnsure(g.playerList.get(request.playerBId), "CANNOT_FIND_PLAYER");
 
     const areaA: Area = playerA.playerToArea();
     const areaB: Area = playerB.playerToArea();
@@ -220,8 +220,8 @@ export class PlayerService {
    * @returns {plyaerGameOverResponse}
    */
   getGameOver(playerList: PlayerAttackResponse[]): plyaerGameOverResponse {
-    const attackPlayer: Player = global.playerList.get(playerList[0].playerId);
-    const gameoverPlayer: Player = global.playerList.get(playerList[1].playerId);
+    const attackPlayer: Player = typeEnsure(g.playerList.get(playerList[0].playerId), "CANNOT_FIND_PLAYER");
+    const gameoverPlayer: Player = typeEnsure(g.playerList.get(playerList[1].playerId), "CANNOT_FIND_PLAYER");
 
     const response: plyaerGameOverResponse = {
       playerId: gameoverPlayer.playerId,
@@ -248,7 +248,7 @@ export class PlayerService {
    * @param {number} planktonId
    */
   eatPlankton(playerId: number): Player {
-    const player: Player = global.playerList?.get(playerId);
+    const player: Player = typeEnsure(g.playerList?.get(playerId), "CANNOT_FIND_PLAYER");
 
     if (player !== undefined) {
       player.planktonCount++;
@@ -263,7 +263,7 @@ export class PlayerService {
    * @param {number} playerId
    */
   deletePlayerByPlayerId(playerId: number): void {
-    global.playerList?.delete(playerId);
+    g.playerList?.delete(playerId);
   }
 
   /**
@@ -276,10 +276,10 @@ export class PlayerService {
   deletePlayerBySocketId(socketId: string): number {
     let playerId: number = 0;
 
-    global.playerList?.forEach((player, key) => {
+    g.playerList?.forEach((player, key) => {
       if (player?.socketId === socketId) {
         playerId = key;
-        global.playerList?.delete(key);
+        g.playerList?.delete(key);
       }
     });
     return playerId;
