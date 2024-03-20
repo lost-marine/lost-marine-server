@@ -27,5 +27,10 @@ export const successMessages: Record<string, Record<string, string>> = {
   EVOLUTION_VALIDATE_SUCCESS: {
     en: "Player evolution validate check is success",
     ko: "플레이어 진화 가능 검증 성공했습니다."
+  },
+
+  EAT_PLANKTON_SUCCESS: {
+    en: "Player eats plankton successfully",
+    ko: "플레이어가 성공적으로 플랑크톤을 먹었습니다."
   }
 };
