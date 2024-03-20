@@ -4,7 +4,6 @@
     "composite": true,
     "noEmit": true,
     "module": "ESNext",
-    "target": "ES2017",
     "moduleResolution": "Bundler",
     "types": ["node", "jest"],
     "allowJs": true, // JavaScript 파일 포함 허용
