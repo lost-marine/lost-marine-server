@@ -18,6 +18,7 @@ import { validateCanCrushArea } from "@/util/crushValid";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
+import { getPlayerMap, setPlayer } from "@/repository/connect";
 
 @Service()
 export class PlayerService {
@@ -135,13 +136,26 @@ export class PlayerService {
    */
   addPlayer(player: Player, socketId: string): PlayerResponse {
     const myInfo = this.initPlayer(player, socketId);
-    global.playerList?.set(myInfo.playerId, myInfo);
-    const playerList = this.getPlayerList();
+    const result: PlayerResponse = { myInfo };
+    // global.playerList?.set(myInfo.playerId, myInfo);
+    setPlayer(myInfo.playerId, myInfo)
+      .then(() => {
+        // 성공적으로 저장된 경우
+        console.log("Player data saved successfully.");
+      })
+      .catch((error) => {
+        // 예상치 못한 에러 발생한 경우
+        console.error("Error occurred while saving player data:", error);
+      });
+    getPlayerMap()
+      .then((playerList) => {
+        console.log(playerList);
 
-    const result: PlayerResponse = {
-      myInfo,
-      playerList
-    };
+        result.playerList = playerList;
+      })
+      .catch((error) => {
+        console.error("Error occurred while saving player data:", error);
+      });
     return result;
   }
 

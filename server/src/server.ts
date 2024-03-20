@@ -85,16 +85,18 @@ io.on("connection", (socket: Socket) => {
       isSuccess: true,
       msg: "플레이어 입장 성공!"
     };
-    let gameStartReq: PlayerResponse = {
-      myInfo: player,
-      playerList: global.playerList
-    };
+    // let gameStartReq: PlayerResponse = {
+    //   myInfo: player,
+    //   playerList: global.playerList
+    // };
+    let gameStartReq: PlayerResponse | null = null;
 
     try {
       assert(player);
       if (playerService.validateNickName(player.nickname).isSuccess) {
         void socket.join(roomId);
         gameStartReq = playerService.addPlayer(player, socket.id);
+        console.log(gameStartReq);
       } else {
         throw new Error("잘못된 닉네임입니다.");
       }
@@ -107,8 +109,10 @@ io.on("connection", (socket: Socket) => {
       callback(validResponse);
       if (validResponse.isSuccess) {
         const planktonList: Plankton[] = [...global.planktonList.values()];
-        sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
-        sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+        if (gameStartReq != null) {
+          sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
+          sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+        }
       }
     }
   });
