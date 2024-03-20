@@ -111,7 +111,7 @@ export class PlayerService {
   playerEvolution(targetSpeciesId: number, player: Player): void {
     const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(targetSpeciesId), "CANNOT_FIND_TIER");
 
-    player.evolutePlayer(targetSpecies);
+    player.evolvePlayer(targetSpecies);
   }
 
   /**
