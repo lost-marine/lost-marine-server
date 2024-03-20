@@ -1,66 +1,38 @@
 import { defineConfig } from "vite";
 import { VitePluginNode } from "vite-plugin-node";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  // ...vite configures
   server: {
-    // vite server configs, for details see [vite doc](https://vitejs.dev/config/#server-host)
-    port: 3000
+    host: "0.0.0.0",
+    port: 3000,
+    proxy: {
+      // 프록시 대상 서버의 엔드포인트와 옵션을 지정합니다.
+      '/socket.io': {
+        target: 'http://localhost:3000', // 소켓 서버의 주소
+        ws: true, // WebSocket 프록시 지원 여부
+        changeOrigin: true, // origin 헤더 변경 여부
+      },
+    }
+  },
+  ssr: {
+    noExternal: ["typedi"]
   },
   plugins: [
     ...VitePluginNode({
-      // Nodejs native Request adapter
-      // currently this plugin support 'express', 'nest', 'koa' and 'fastify' out of box,
-      // you can also pass a function if you are using other frameworks, see Custom Adapter section
       adapter: "express",
-
-      // tell the plugin where is your project entry
-      appPath: "./src/app.ts",
-
-      // Optional, default: 'viteNodeApp'
-      // the name of named export of you app from the appPath file
+      appPath: "./src/server.ts",
       exportName: "viteNodeApp",
-
-      // Optional, default: false
-      // if you want to init your app on boot, set this to true
-      initAppOnBoot: false,
-
-      // Optional, default: 'esbuild'
-      // The TypeScript compiler you want to use
-      // by default this plugin is using vite default ts compiler which is esbuild
-      // 'swc' compiler is supported to use as well for frameworks
-      // like Nestjs (esbuild dont support 'emitDecoratorMetadata' yet)
-      // you need to INSTALL `@swc/core` as dev dependency if you want to use swc
+      initAppOnBoot: true,
       tsCompiler: "esbuild",
-
-      // Optional, default: {
-      // jsc: {
-      //   target: 'es2019',
-      //   parser: {
-      //     syntax: 'typescript',
-      //     decorators: true
-      //   },
-      //  transform: {
-      //     legacyDecorator: true,
-      //     decoratorMetadata: true
-      //   }
-      // }
-      // }
-      // swc configs, see [swc doc](https://swc.rs/docs/configuration/swcrc)
       swcOptions: {}
-    })
+    }),
+    tsconfigPaths()
   ],
   optimizeDeps: {
-    // Vite does not work well with optionnal dependencies,
-    // you can mark them as ignored for now
-    // eg: for nestjs, exlude these optional dependencies:
-    // exclude: [
-    //   '@nestjs/microservices',
-    //   '@nestjs/websockets',
-    //   'cache-manager',
-    //   'class-transformer',
-    //   'class-validator',
-    //   'fastify-swagger',
-    // ],
+    esbuildOptions: {
+      tsconfig: 'tsconfig.json'
+    }
   }
 });
+

@@ -11,7 +11,8 @@ module.exports = {
   overrides: [
     {
       env: {
-        node: true
+        node: true,
+        jest: true
       },
       files: [".eslintrc.{js,cjs}"],
       parserOptions: {
@@ -25,5 +26,8 @@ module.exports = {
     sourceType: "module",
     project: "./server/tsconfig.json"
   },
-  rules: {}
+  plugins: ["@typescript-eslint"],
+  rules: {
+    "@typescript-eslint/consistent-type-definitions": "off"
+  }
 };
