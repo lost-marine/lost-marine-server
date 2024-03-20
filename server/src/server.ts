@@ -16,7 +16,8 @@ import {
   type ChatMessageReceiveRequest,
   type PlayerAttackResponse,
   type Species,
-  type evolveRequest
+  type evolveRequest,
+  type nicknameRequest
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -76,7 +77,7 @@ io.on("connection", (socket: Socket) => {
   }
 
   // 닉네임 확인
-  socket.on("nickname-validate", (nickname: string, callback) => {
+  socket.on("nickname-validate", (nickname: nicknameRequest, callback) => {
     let validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("NICKNAME_VALIDATE_SUCCESS")
@@ -103,7 +104,7 @@ io.on("connection", (socket: Socket) => {
     };
 
     try {
-      if (playerService.validateNickName(typeEnsure(player, "INVALID_INPUT").nickname).isSuccess) {
+      if (playerService.validateNickName(typeEnsure(player, "INVALID_INPUT")).isSuccess) {
         void socket.join(roomId);
         gameStartReq = playerService.addPlayer(player, socket.id);
       } else {

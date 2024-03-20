@@ -1,6 +1,10 @@
 import { type Plankton } from "@/classes/plankton";
 import { type Player } from "@/classes/player";
 
+export type nicknameRequest = {
+  nickname: string;
+};
+
 export type PlayerResponse = {
   myInfo: Player;
   playerList: Player[];
