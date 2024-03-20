@@ -7,7 +7,8 @@ import {
   type PlayerResponse,
   type PlayerAttackResponse,
   type plyaerGameOverResponse,
-  type Species
+  type Species,
+  type NicknameRequest
 } from "@/types";
 import { MapService } from "./map";
 // import { type Position } from "@/classes/position";
@@ -64,7 +65,8 @@ export class PlayerService {
    * @param {string} nickname
    * @returns {boolean}
    */
-  validateNickName(nickname: string): ValidateRespone {
+  validateNickName(request: NicknameRequest): ValidateRespone {
+    const nickname: string = request.nickname;
     const regexp: RegExp = /^[ㄱ-ㅎㅏ-ㅣ가-힣A-Za-z0-9]{2,12}$/;
     let isSuccess: boolean = regexp.test(nickname);
     let msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
