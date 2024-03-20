@@ -1,7 +1,7 @@
 import { type Plankton } from "@/classes/plankton";
 import { type Player } from "@/classes/player";
 
-export type nicknameRequest = {
+export type NicknameRequest = {
   nickname: string;
 };
 
@@ -70,7 +70,7 @@ export type ChatMessageReceiveRequest = {
   timeStamp: number;
 } & ChatMessageSendResponse;
 
-export type evolveRequest = {
+export type EvolveRequest = {
   speciesId: number;
   playerId: number;
   point: number;
