@@ -61,9 +61,9 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // 플레이어 위치 싱크
-// setInterval(() => {
-//   sendToAll("others-position-sync", playerService.getPlayerList());
-// }, 300);
+setInterval(() => {
+  sendToAll("others-position-sync", playerService.getPlayerList());
+}, 2000);
 
 Container.set("width", 2688);
 Container.set("height", 1536);

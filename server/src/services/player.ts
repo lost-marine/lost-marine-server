@@ -19,7 +19,7 @@ import { validateCanCrushArea } from "@/util/crushValid";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
-import { setPlayer, getPlayerList } from "@/repository/connect";
+import { setPlayer, getPlayerList, existPlayer, getPlayer, updatePlayerInfo } from "@/repository/connect";
 import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
@@ -123,9 +123,10 @@ export class PlayerService {
    *
    * @returns {Player[]}
    */
-  getPlayerList(): Player[] {
-    const valuesArray = Array.from(g.playerList?.values() as Iterable<Player>);
-    return Array.from(valuesArray);
+  async getPlayerList(): Promise<Player[]> {
+    const playerMap = await getPlayerList();
+    console.log(playerMap);
+    return playerMap;
   }
 
   /**
@@ -160,16 +161,19 @@ export class PlayerService {
    * @param {Player} player
    * @returns {Player[]}
    */
-  updatePlayerInfo(player: Player): Player[] {
+  async updatePlayerInfo(player: Player): Promise<Player[]> {
     const playerId = player.playerId;
     // 플레이어 존재하는 경우에만
-    if (g.playerList.has(playerId)) {
-      const item: Player = typeEnsure(g.playerList.get(playerId), "CANNOT_FIND_PLAYER");
-      item?.updatePlayerInfo(player);
-      g.playerList?.set(playerId, item);
+    if (await existPlayer(playerId)) {
+      const item: Player | null = await getPlayer(playerId);
+      console.log(item);
+      if (item !== null) {
+        item.updatePlayerInfo(player);
+        await updatePlayerInfo(playerId, player);
+      }
     }
 
-    return this.getPlayerList();
+    return await this.getPlayerList();
   }
 
   /** Description placeholder
