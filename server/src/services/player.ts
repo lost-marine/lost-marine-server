@@ -27,7 +27,6 @@ export class PlayerService {
 
   constructor() {
     this.count = 0;
-    g.playerList = new Map();
   }
 
   /**
