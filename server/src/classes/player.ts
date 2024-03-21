@@ -22,6 +22,7 @@ export class Player extends Creature {
   isFlipX: boolean = false;
   isGameOver: boolean = false;
   speciesId: number = 0;
+  isSleeping: boolean = true;
 
   /**
    * 플레이어 위치 정보 갱신
@@ -35,6 +36,7 @@ export class Player extends Creature {
     this.centerX = player.centerX;
     this.centerY = player.centerY;
     this.isFlipX = player.isFlipX;
+    this.isSleeping = player.isSleeping;
   }
 
   /**
