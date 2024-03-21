@@ -1,7 +1,6 @@
 {
   "include": ["./.eslintrc.js", "./src/**/*", "./src/**/*.ts", "vite.config.ts"],
   "compilerOptions": {
-    "target": "es2017",
     "composite": true,
     "noEmit": true,
     "module": "ESNext",

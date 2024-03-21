@@ -6,7 +6,13 @@ client.on("error", (err) => {
   console.log("Redis Client Error", err);
 });
 
-await client.connect();
+async function initializeClient(): Promise<void> {
+  await client.connect();
+}
+initializeClient().catch((error) => {
+  console.error(error);
+});
+
 const playerKey: string = "player:";
 
 export async function existPlayer(playerId: number): Promise<boolean> {
