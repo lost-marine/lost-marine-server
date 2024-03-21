@@ -276,7 +276,7 @@ export class PlayerService {
    * @returns {number}
    */
   deletePlayerBySocketId(socketId: string): number {
-    let playerId: number = 0;
+    let playerId: number = -1;
 
     g.playerList?.forEach((player, key) => {
       if (player?.socketId === socketId) {

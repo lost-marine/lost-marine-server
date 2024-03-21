@@ -175,7 +175,9 @@ io.on("connection", (socket: Socket) => {
   // 새로고침이나 창닫음으로 연결이 끊기는 경우
   socket.on("disconnect", () => {
     const result = playerService.deletePlayerBySocketId(socket.id);
-    sendWithoutMe(socket, "player-quit", result);
+    if (result !== -1) {
+      sendWithoutMe(socket, "player-quit", result);
+    }
   });
 
   // 플랑크톤 섭취 이벤트
