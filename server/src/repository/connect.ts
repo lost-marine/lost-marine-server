@@ -63,7 +63,7 @@ export async function getPlayerList(): Promise<Player[]> {
   return playerList;
 }
 
-export async function updatePlayerInfo(playerId: number, player: Player): Promise<boolean> {
+export async function updatePlayer(playerId: number, player: Player): Promise<boolean> {
   const result: boolean = false;
   try {
     const playerJSON = JSON.stringify(player);

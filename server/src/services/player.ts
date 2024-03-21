@@ -19,10 +19,10 @@ import { validateCanCrushArea } from "@/util/crushValid";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
-import { setPlayer, getPlayerList, existPlayer, getPlayer, updatePlayerInfo } from "@/repository/connect";
 import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
+import { existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/connect";
 @Service()
 export class PlayerService {
   count: number;
@@ -168,8 +168,12 @@ export class PlayerService {
       const item: Player | null = await getPlayer(playerId);
       console.log(item);
       if (item !== null) {
-        item.updatePlayerInfo(player);
-        await updatePlayerInfo(playerId, player);
+        // item.updatePlayerInfo(player);
+        item.direction = player.direction;
+        item.centerX = player.centerX;
+        item.centerY = player.centerY;
+        item.isFlipX = player.isFlipX;
+        await updatePlayer(playerId, item);
       }
     }
 

@@ -112,7 +112,7 @@
     socket.emit("my-position-sync", user);
   });
 
-  socket.on("enter", function (msg) {
+  socket.on("player-enter", function (msg) {
     console.log(msg);
     var item = document.createElement("li");
     item.textContent = msg;

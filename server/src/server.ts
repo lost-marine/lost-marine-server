@@ -61,9 +61,17 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // 플레이어 위치 싱크
-setInterval(() => {
-  sendToAll("others-position-sync", playerService.getPlayerList());
-}, 2000);
+// async function updatePlayerPositions(): Promise<void> {
+//   const playerList = await playerService.getPlayerList();
+//   sendToAll("others-position-sync", playerList);
+// }
+
+// 최초 실행 후 2초마다 updatePlayerPositions 함수를 호출
+// setInterval(() => {
+//   updatePlayerPositions().catch((error) => {
+//     console.error(error);
+//   });
+// }, 300);
 
 Container.set("width", 2688);
 Container.set("height", 1536);
@@ -110,6 +118,7 @@ io.on("connection", (socket: Socket) => {
 
             if (gameStartReq !== null) {
               const planktonList: Plankton[] = Array.from(g.planktonList.values());
+              console.log(gameStartReq.myInfo);
               sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
               sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
             }
@@ -158,14 +167,17 @@ io.on("connection", (socket: Socket) => {
 
   // 플레이어 본인 위치 전송
   socket.on("my-position-sync", (data: Player) => {
-    try {
-      const result = playerService.updatePlayerInfo(data);
-      // 다른 플레이어에게 변경사항 알려줌
-      sendWithoutMe(socket, "others-position-sync", result);
-    } catch (error) {
-      // TO-DO: 플레이어가 서버에서 관리하지 않은 미검증된 사용자의 요청인 경우
-      // 처리 방법 상의가 필요합니다.
-    }
+    playerService
+      .updatePlayerInfo(data)
+      .then((result) => {
+        // 다른 플레이어에게 변경사항 알려줌
+        sendWithoutMe(socket, "others-position-sync", result);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    // TO-DO: 플레이어가 서버에서 관리하지 않은 미검증된 사용자의 요청인 경우
+    // 처리 방법 상의가 필요합니다.
   });
 
   // 플레이어 본인 퇴장
