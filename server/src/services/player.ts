@@ -154,7 +154,7 @@ export class PlayerService {
    * @param {Player} player
    * @returns {Player[]}
    */
-  updatePlayerInfo(player: Player): Player[] {
+  updatePlayerInfo(player: Player): void {
     const playerId = player.playerId;
     // 플레이어 존재하는 경우에만
     if (g.playerList.has(playerId)) {
@@ -162,8 +162,6 @@ export class PlayerService {
       item?.updatePlayerInfo(player);
       g.playerList?.set(playerId, item);
     }
-
-    return this.getPlayerList();
   }
 
   /** Description placeholder
@@ -206,7 +204,7 @@ export class PlayerService {
     const areaB: Area = playerB.playerToArea();
 
     if (isAttacking(areaA, areaB)) {
-      playerA.updateAttackerInfo();
+      playerA.updateAttackerPoint();
       playerB.updateDefenderInfo(playerA);
 
       return [playerA.toPlayerAttackResponse(), playerB.toPlayerAttackResponse()];
@@ -224,6 +222,8 @@ export class PlayerService {
   getGameOver(playerList: PlayerAttackResponse[]): plyaerGameOverResponse {
     const attackPlayer: Player = typeEnsure(g.playerList.get(playerList[0].playerId), "CANNOT_FIND_PLAYER");
     const gameoverPlayer: Player = typeEnsure(g.playerList.get(playerList[1].playerId), "CANNOT_FIND_PLAYER");
+
+    attackPlayer.updateAttackerPlayerCount();
 
     const response: plyaerGameOverResponse = {
       playerId: gameoverPlayer.playerId,

@@ -43,8 +43,11 @@ export class Player extends Creature {
    * @date 3/8/2024 - 11:19:35 AM
    * @author 양소영
    */
-  updateAttackerInfo(): void {
+  updateAttackerPoint(): void {
     this.point++;
+  }
+
+  updateAttackerPlayerCount(): void {
     this.playerCount++;
   }
 
