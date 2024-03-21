@@ -89,14 +89,18 @@ io.on("connection", (socket: Socket) => {
       isSuccess: true,
       msg: getSuccessMessage("NICKNAME_VALIDATE_SUCCESS")
     };
-    try {
-      validateResponse = playerService.validateNickName(typeEnsure(nickname, "INVALID_INPUT"));
-    } catch (error: unknown) {
-      validateResponse.isSuccess = false;
-      validateResponse.msg = getErrorMessage(error);
-    } finally {
-      callback(validateResponse);
-    }
+    playerService
+      .validateNickName(typeEnsure(nickname, "INVALID_INPUT"))
+      .then((result) => {
+        validateResponse = result;
+      })
+      .catch((error) => {
+        validateResponse.isSuccess = false;
+        validateResponse.msg = getErrorMessage(error);
+      })
+      .finally(() => {
+        callback(validateResponse);
+      });
   });
 
   // 참가자 본인 입장(소켓 연결)
@@ -106,36 +110,42 @@ io.on("connection", (socket: Socket) => {
       msg: getSuccessMessage("PLAYER_ENTER_SUCCESS")
     };
 
-    try {
-      if (playerService.validateNickName(typeEnsure(player, "INVALID_INPUT")).isSuccess) {
-        void socket.join(roomId);
+    playerService
+      .validateNickName(typeEnsure(player, "INVALID_INPUT"))
+      .then((result) => {
+        console.log(result);
 
-        playerService
-          .addPlayer(player, socket.id)
-          .then((addResult) => {
-            const gameStartReq: PlayerResponse | null = addResult;
+        if (result.isSuccess) {
+          void socket.join(roomId);
+          console.log("룸 입장");
+          playerService
+            .addPlayer(player, socket.id)
+            .then((addResult) => {
+              const gameStartReq: PlayerResponse | null = addResult;
 
-            if (gameStartReq !== null) {
-              const planktonList: Plankton[] = Array.from(g.planktonList.values());
-              console.log(gameStartReq.myInfo);
-              sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
-              sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
-            }
-          })
-          .catch((error) => {
-            console.error("값 못받아옴 ", error);
-            validResponse.isSuccess = false;
-            validResponse.msg = getErrorMessage(error);
-            callback(validResponse);
-          });
-      } else {
-        throw new Error("INVALID_INPUT");
-      }
-    } catch (error: unknown) {
-      validResponse.isSuccess = false;
-      validResponse.msg = getErrorMessage(error);
-      callback(validResponse);
-    }
+              if (gameStartReq !== null) {
+                const planktonList: Plankton[] = Array.from(g.planktonList.values());
+                console.log(gameStartReq.myInfo);
+                sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
+                sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+              }
+            })
+            .catch((error) => {
+              console.error("값 못받아옴 ", error);
+              validResponse.isSuccess = false;
+              validResponse.msg = getErrorMessage(error);
+              callback(validResponse);
+            });
+        } else {
+          throw new Error("INVALID_INPUT");
+        }
+      })
+      .catch((error) => {
+        validResponse.isSuccess = false;
+        validResponse.msg = getErrorMessage(error);
+        callback(validResponse);
+      });
+    console.log("끝");
   });
   // 진화요청(Client→ Server)
   socket.on("player-evolution", (data: EvolveRequest, callback) => {
@@ -190,8 +200,16 @@ io.on("connection", (socket: Socket) => {
 
   // 새로고침이나 창닫음으로 연결이 끊기는 경우
   socket.on("disconnect", () => {
-    const result = playerService.deletePlayerBySocketId(socket.id);
-    sendWithoutMe(socket, "player-quit", result);
+    playerService
+      .deletePlayerBySocketId(socket.id)
+      .then((result) => {
+        if (result !== -1) {
+          sendWithoutMe(socket, "player-quit", result);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   });
 
   // 플랑크톤 섭취 이벤트
@@ -250,6 +268,7 @@ io.on("connection", (socket: Socket) => {
                       .then((gameOverResponse) => {
                         sendToMe(player.socketId, "game-over", gameOverResponse);
                         sendWithoutMe(socket, "player-quit", player.playerId);
+                        playerService.deletePlayerByPlayerId(player.playerId);
                       })
                       .catch((error) => {
                         console.error(error);

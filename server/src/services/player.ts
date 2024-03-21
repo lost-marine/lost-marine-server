@@ -68,27 +68,24 @@ export class PlayerService {
    * @param {string} nickname
    * @returns {boolean}
    */
-  validateNickName(request: NicknameRequest): ValidateRespone {
+  async validateNickName(request: NicknameRequest): Promise<ValidateRespone> {
     const nickname: string = request.nickname;
     const regexp: RegExp = /^[ㄱ-ㅎㅏ-ㅣ가-힣A-Za-z0-9]{2,12}$/;
     let isSuccess: boolean = regexp.test(nickname);
     let msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
+
     // 닉네임 중복 검사
     if (isSuccess) {
-      g.playerList?.forEach((player) => {
-        if (player?.nickname === nickname) {
-          isSuccess = false;
-          msg = "중복된 아이디입니다.";
-        }
+      await getPlayerList().then((playerMap) => {
+        playerMap.forEach((player) => {
+          if (player.nickname === nickname) {
+            isSuccess = false;
+            msg = "중복된 아이디입니다.";
+          }
+        });
       });
     }
-
-    const response: ValidateRespone = {
-      isSuccess,
-      msg
-    };
-
-    return response;
+    return { isSuccess, msg };
   }
 
   /**
@@ -291,15 +288,17 @@ export class PlayerService {
    * @param {string} socketId
    * @returns {number}
    */
-  deletePlayerBySocketId(socketId: string): number {
-    let playerId: number = 0;
-
-    g.playerList?.forEach((player, key) => {
-      if (player?.socketId === socketId) {
-        playerId = key;
-        g.playerList?.delete(key);
-      }
+  async deletePlayerBySocketId(socketId: string): Promise<number> {
+    let playerId: number = -1;
+    await getPlayerList().then((playerMap) => {
+      playerMap.forEach((player) => {
+        if (player?.socketId === socketId) {
+          playerId = player.playerId;
+          this.deletePlayerByPlayerId(player.playerId);
+        }
+      });
     });
+
     return playerId;
   }
 }
