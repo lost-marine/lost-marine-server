@@ -39,6 +39,7 @@ export async function getPlayer(key: number): Promise<Player | null> {
 
     if (playerData !== null) {
       const playerObject: Player = JSON.parse(playerData);
+      console.log(playerObject);
       return playerObject;
     }
     return playerData;
@@ -63,13 +64,22 @@ export async function getPlayerList(): Promise<Player[]> {
   return playerList;
 }
 
-export async function updatePlayer(playerId: number, player: Player): Promise<boolean> {
+export async function updatePlayer(player: Player): Promise<boolean> {
   const result: boolean = false;
   try {
     const playerJSON = JSON.stringify(player);
-    await client.set(playerKey + playerId, playerJSON);
+    await client.set(playerKey + player.playerId, playerJSON);
   } catch (error) {
     console.error("플레이어가 정보 갱신에 실패했습니다.");
   }
   return result;
+}
+
+export async function deletePlayer(playerId: number): Promise<void> {
+  try {
+    await client.del(playerKey + playerId);
+  } catch (error) {
+    // 에러 처리
+    console.error("Error deleting player to Redis:", error);
+  }
 }

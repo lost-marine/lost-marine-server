@@ -6,9 +6,9 @@ import {
   type ValidateRespone,
   type PlayerResponse,
   type PlayerAttackResponse,
-  type plyaerGameOverResponse,
   type Species,
-  type NicknameRequest
+  type NicknameRequest,
+  type playerGameOverResponse
 } from "@/types";
 import { MapService } from "./map";
 // import { type Position } from "@/classes/position";
@@ -22,7 +22,9 @@ import { SPECIES_ASSET } from "@/constants/asset";
 import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
-import { existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/connect";
+import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/connect";
+import { playerToArea, toPlayerAttackResponse, updateAttackerInfo, updateDefenderInfo, updatePlayerInfo } from "@/feat/player";
+
 @Service()
 export class PlayerService {
   count: number;
@@ -168,12 +170,8 @@ export class PlayerService {
       const item: Player | null = await getPlayer(playerId);
       console.log(item);
       if (item !== null) {
-        // item.updatePlayerInfo(player);
-        item.direction = player.direction;
-        item.centerX = player.centerX;
-        item.centerY = player.centerY;
-        item.isFlipX = player.isFlipX;
-        await updatePlayer(playerId, item);
+        updatePlayerInfo(item, player);
+        await updatePlayer(item);
       }
     }
 
@@ -187,19 +185,16 @@ export class PlayerService {
    *
    * @param {PlayerCrashRequest} data
    */
-  isCrashValidate(request: PlayerCrashRequest): void {
+  async isCrashValidate(request: PlayerCrashRequest): Promise<void> {
     // 플레이어 두 명이 playerList에 존재하는지 검증
-    if (
-      request === undefined ||
-      g.playerList.get(request.playerAId) === undefined ||
-      g.playerList.get(request.playerBId) === undefined
-    ) {
+    if (request === undefined || getPlayer(request.playerAId) === undefined || getPlayer(request.playerBId) === undefined) {
       throw new Error("ATTACK_PLAYER_NO_EXIST_ERROR");
     }
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
-    const firstPlayer: Player = typeEnsure(g.playerList.get(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
-    const secondPlayer: Player = typeEnsure(g.playerList.get(request.playerBId), "ATTACK_PLAYER_NO_EXIST_ERROR");
-    if (!validateCanCrushArea(firstPlayer.playerToArea(), secondPlayer.playerToArea())) {
+    const firstPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
+    const secondPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
+
+    if (!validateCanCrushArea(playerToArea(firstPlayer), playerToArea(secondPlayer))) {
       throw new Error("ATTACK_PLAYER_NO_COLLISION_AREA");
     }
   }
@@ -212,18 +207,21 @@ export class PlayerService {
    * @param {PlayerCrashRequest} data
    * @returns {Player[]}
    */
-  attackPlayer(request: PlayerCrashRequest): PlayerAttackResponse[] | undefined {
-    const playerA: Player = typeEnsure(g.playerList.get(request.playerAId), "CANNOT_FIND_PLAYER");
-    const playerB: Player = typeEnsure(g.playerList.get(request.playerBId), "CANNOT_FIND_PLAYER");
+  async attackPlayer(request: PlayerCrashRequest): Promise<PlayerAttackResponse[] | undefined> {
+    const playerA: Player = typeEnsure(await getPlayer(request.playerAId), "CANNOT_FIND_PLAYER");
+    const playerB: Player = typeEnsure(await getPlayer(request.playerBId), "CANNOT_FIND_PLAYER");
 
-    const areaA: Area = playerA.playerToArea();
-    const areaB: Area = playerB.playerToArea();
+    const areaA: Area = playerToArea(playerA);
+    const areaB: Area = playerToArea(playerB);
 
     if (isAttacking(areaA, areaB)) {
-      playerA.updateAttackerInfo();
-      playerB.updateDefenderInfo(playerA);
+      updateAttackerInfo(playerA);
+      updateDefenderInfo(playerB, playerA);
 
-      return [playerA.toPlayerAttackResponse(), playerB.toPlayerAttackResponse()];
+      await updatePlayer(playerA);
+      await updatePlayer(playerB);
+
+      return [toPlayerAttackResponse(playerA), toPlayerAttackResponse(playerB)];
     }
   }
 
@@ -235,11 +233,13 @@ export class PlayerService {
    * @param {PlayerAttackResponse} player
    * @returns {plyaerGameOverResponse}
    */
-  getGameOver(playerList: PlayerAttackResponse[]): plyaerGameOverResponse {
-    const attackPlayer: Player = typeEnsure(g.playerList.get(playerList[0].playerId), "CANNOT_FIND_PLAYER");
-    const gameoverPlayer: Player = typeEnsure(g.playerList.get(playerList[1].playerId), "CANNOT_FIND_PLAYER");
+  async getGameOver(playerList: PlayerAttackResponse[]): Promise<playerGameOverResponse> {
+    console.log(playerList[0].playerId + " " + playerList[1].playerId);
 
-    const response: plyaerGameOverResponse = {
+    const attackPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
+    const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
+
+    const response: playerGameOverResponse = {
       playerId: gameoverPlayer.playerId,
       playerNickname: gameoverPlayer.nickname,
       attackerNickname: attackPlayer.nickname,
@@ -279,7 +279,9 @@ export class PlayerService {
    * @param {number} playerId
    */
   deletePlayerByPlayerId(playerId: number): void {
-    g.playerList?.delete(playerId);
+    deletePlayer(playerId).catch((error) => {
+      console.error(error);
+    });
   }
 
   /**

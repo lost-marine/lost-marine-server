@@ -14,7 +14,6 @@ import {
   type PlanktonEatResponse,
   type ChatMessageSendResponse,
   type ChatMessageReceiveRequest,
-  type PlayerAttackResponse,
   type Species,
   type EvolveRequest,
   type NicknameRequest
@@ -225,37 +224,53 @@ io.on("connection", (socket: Socket) => {
       isSuccess: true,
       msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
     };
-    try {
-      playerService.isCrashValidate(data);
-    } catch (error: unknown) {
-      console.log(error);
-      validateResponse.isSuccess = false;
-      validateResponse.msg = getErrorMessage(error);
-    } finally {
-      callback(validateResponse);
-    }
 
-    // 충돌 검증이 성공적인 경우만 공격 시도
-    if (validateResponse.isSuccess) {
-      const result: PlayerAttackResponse[] | undefined = playerService.attackPlayer(data);
+    playerService
+      .isCrashValidate(data)
+      .then(() => {
+        // 충돌 검증이 성공적인 경우만 공격 시도
+        if (validateResponse.isSuccess) {
+          // const result: PlayerAttackResponse[] | undefined = playerService.attackPlayer(data);
+          playerService
+            .attackPlayer(data)
+            .then((result) => {
+              if (result !== undefined && result.length === 2) {
+                // 플레이어 상태 정보 수정
+                result.forEach((player) => {
+                  console.log(result);
+                  const mySocketId: string = player.socketId;
+                  const { socketId, ...playerResponse } = player;
+                  sendToMe(mySocketId, "player-status-sync", playerResponse);
 
-      if (result !== undefined && result.length === 2) {
-        // 플레이어 상태 정보 수정
-        result.forEach((player) => {
-          const mySocketId: string = player.socketId;
-          const { socketId, ...playerResponse } = player;
-          sendToMe(mySocketId, "player-status-sync", playerResponse);
-
-          // 게임 오버인 경우
-          if (player.isGameOver) {
-            console.log("game-over");
-            sendToMe(player.socketId, "game-over", playerService.getGameOver(result));
-            sendWithoutMe(socket, "player-quit", player.playerId);
-            playerService.deletePlayerByPlayerId(player.playerId);
-          }
-        });
-      }
-    }
+                  // 게임 오버인 경우
+                  if (player.isGameOver) {
+                    console.log("game-over");
+                    playerService
+                      .getGameOver(result)
+                      .then((gameOverResponse) => {
+                        sendToMe(player.socketId, "game-over", gameOverResponse);
+                        sendWithoutMe(socket, "player-quit", player.playerId);
+                      })
+                      .catch((error) => {
+                        console.error(error);
+                      });
+                  }
+                });
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        validateResponse.isSuccess = false;
+        validateResponse.msg = getErrorMessage(error);
+      })
+      .finally(() => {
+        callback(validateResponse);
+      });
   });
 
   socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
