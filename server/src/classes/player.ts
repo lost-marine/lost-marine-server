@@ -1,7 +1,5 @@
 import { Creature } from "@/classes/creature";
-import { createBuilder } from "@/util/builder";
-import { Area } from "./area";
-import { type PlayerAttackResponse, type Species } from "@/types";
+import { type Species } from "@/types";
 
 export class Player extends Creature {
   [x: string]: any;
