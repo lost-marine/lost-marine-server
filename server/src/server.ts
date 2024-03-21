@@ -61,9 +61,9 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // 플레이어 위치 싱크
-setInterval(() => {
-  sendToAll("others-position-sync", playerService.getPlayerList());
-}, 300);
+// setInterval(() => {
+//   sendToAll("others-position-sync", playerService.getPlayerList());
+// }, 300);
 
 Container.set("width", 2688);
 Container.set("height", 1536);
@@ -153,7 +153,8 @@ io.on("connection", (socket: Socket) => {
   // 플레이어 본인 위치 전송
   socket.on("my-position-sync", (data: Player) => {
     try {
-      const result = playerService.updatePlayerInfo(data);
+      playerService.updatePlayerInfo(data);
+      const result = playerService.getPlayerList();
       // 다른 플레이어에게 변경사항 알려줌
       sendWithoutMe(socket, "others-position-sync", result);
     } catch (error) {
