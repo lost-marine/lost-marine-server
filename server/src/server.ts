@@ -163,8 +163,8 @@ io.on("connection", (socket: Socket) => {
   });
 
   // 플레이어 본인 퇴장
-  socket.on("player-quit", (playerId: number) => {
-    playerService.deletePlayerByPlayerId(typeEnsure(playerId));
+  socket.on("player-quit", async (playerId: number) => {
+    await playerService.deletePlayerByPlayerId(typeEnsure(playerId));
     sendWithoutMe(socket, "player-quit", playerId);
 
     // playerId가 올바른 input이 아니라면 어떻게 해야할지
@@ -226,11 +226,10 @@ io.on("connection", (socket: Socket) => {
           // 게임 오버인 경우
           if (player.isGameOver) {
             console.log("game-over");
-
             const gameOverResponse = await playerService.getGameOver(result);
             sendToMe(player.socketId, "game-over", gameOverResponse);
             sendWithoutMe(socket, "player-quit", player.playerId);
-            playerService.deletePlayerByPlayerId(player.playerId);
+            await playerService.deletePlayerByPlayerId(player.playerId);
           }
         }
       }

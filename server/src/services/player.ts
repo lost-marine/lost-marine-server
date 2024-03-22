@@ -76,13 +76,12 @@ export class PlayerService {
 
     // 닉네임 중복 검사
     if (isSuccess) {
-      await getPlayerList().then((playerMap) => {
-        playerMap.forEach((player) => {
-          if (player.nickname === nickname) {
-            isSuccess = false;
-            msg = "중복된 아이디입니다.";
-          }
-        });
+      const playerMap = await getPlayerList();
+      playerMap.forEach((player) => {
+        if (player.nickname === nickname) {
+          isSuccess = false;
+          msg = "중복된 아이디입니다.";
+        }
       });
     }
     return { isSuccess, msg };
@@ -205,6 +204,9 @@ export class PlayerService {
    * @returns {Player[]}
    */
   async attackPlayer(request: PlayerCrashRequest): Promise<PlayerAttackResponse[] | undefined> {
+    console.log(await getPlayer(request.playerAId));
+    console.log(await getPlayer(request.playerBId));
+
     const playerA: Player = typeEnsure(await getPlayer(request.playerAId), "CANNOT_FIND_PLAYER");
     const playerB: Player = typeEnsure(await getPlayer(request.playerBId), "CANNOT_FIND_PLAYER");
 
@@ -275,10 +277,8 @@ export class PlayerService {
    *
    * @param {number} playerId
    */
-  deletePlayerByPlayerId(playerId: number): void {
-    deletePlayer(playerId).catch((error) => {
-      console.error(error);
-    });
+  async deletePlayerByPlayerId(playerId: number): Promise<void> {
+    await deletePlayer(playerId);
   }
 
   /**
@@ -290,13 +290,14 @@ export class PlayerService {
    */
   async deletePlayerBySocketId(socketId: string): Promise<number> {
     let playerId: number = -1;
-    await getPlayerList().then((playerMap) => {
-      playerMap.forEach((player) => {
-        if (player?.socketId === socketId) {
-          playerId = player.playerId;
-          this.deletePlayerByPlayerId(player.playerId);
-        }
-      });
+
+    const playerMap = await getPlayerList();
+
+    playerMap.forEach((player) => {
+      if (player?.socketId === socketId) {
+        playerId = player.playerId;
+        void this.deletePlayerByPlayerId(player.playerId);
+      }
     });
 
     return playerId;
