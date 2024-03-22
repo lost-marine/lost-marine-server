@@ -23,7 +23,14 @@ import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
 import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/connect";
-import { playerToArea, toPlayerAttackResponse, updateAttackerInfo, updateDefenderInfo, updatePlayerInfo } from "@/feat/player";
+import {
+  playerToArea,
+  toPlayerAttackResponse,
+  updateAttackerInfo,
+  updateAttackerPlayerCount,
+  updateDefenderInfo,
+  updatePlayerInfo
+} from "@/feat/player";
 import { error } from "console";
 
 @Service()
@@ -171,7 +178,6 @@ export class PlayerService {
     } else {
       throw new Error("PLAYER_NOT_FOUND");
     }
-
     return await this.getPlayerList();
   }
 
@@ -233,6 +239,10 @@ export class PlayerService {
   async getGameOver(playerList: PlayerAttackResponse[]): Promise<playerGameOverResponse> {
     const attackPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
     const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
+
+    updateAttackerPlayerCount(attackPlayer);
+
+    updatePlayer(attackPlayer);
 
     const response: playerGameOverResponse = {
       playerId: gameoverPlayer.playerId,

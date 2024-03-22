@@ -8,7 +8,7 @@ export class CircularQueue {
   queue: Area[];
 
   constructor(queueType: number) {
-    this.capacity = 1000;
+    this.capacity = 4000;
     this.front = 0;
     this.rear = 0;
     this.queue = [];

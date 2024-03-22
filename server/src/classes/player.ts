@@ -20,6 +20,7 @@ export class Player extends Creature {
   isFlipX: boolean = false;
   isGameOver: boolean = false;
   speciesId: number = 0;
+  isSleeping: boolean = true;
 
   evolvePlayer(this: Player, targetSpecies: Species): void {
     this.speciesId = targetSpecies.speciesId;

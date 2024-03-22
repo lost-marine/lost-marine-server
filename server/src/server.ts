@@ -76,7 +76,7 @@ app.get("/", (req: Request, res: Response) => {
 
 Container.set("width", 2688);
 Container.set("height", 1536);
-Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
+Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 8));
 
 io.on("connection", (socket: Socket) => {
   const planktonManager = Container.get<PlanktonService>(PlanktonService);
@@ -182,6 +182,7 @@ io.on("connection", (socket: Socket) => {
   // 새로고침이나 창닫음으로 연결이 끊기는 경우
   socket.on("disconnect", async () => {
     const result = await playerService.deletePlayerBySocketId(socket.id);
+
     if (result !== -1) {
       sendWithoutMe(socket, "player-quit", result);
     }
@@ -282,6 +283,7 @@ io.on("connection", (socket: Socket) => {
       response.isSuccess = false;
       response.msg = getErrorMessage(error);
     } finally {
+      // callback(response);
       if (response.isSuccess) {
         sendToAll("chat-message-receive", sendFormat);
       }
