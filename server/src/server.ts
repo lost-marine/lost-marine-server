@@ -154,20 +154,27 @@ io.on("connection", (socket: Socket) => {
 
   // 플레이어 본인 위치 전송
   socket.on("my-position-sync", async (data: Player) => {
-    const result = await playerService.updatePlayerInfo(data);
+    try {
+      const result = await playerService.updatePlayerInfo(data);
 
-    // 다른 플레이어에게 변경사항 알려줌
-    sendWithoutMe(socket, "others-position-sync", result);
-
-    // TO-DO: 플레이어가 서버에서 관리하지 않은 미검증된 사용자의 요청인 경우
-    // 처리 방법 상의가 필요합니다.
+      // 다른 플레이어에게 변경사항 알려줌
+      sendWithoutMe(socket, "others-position-sync", result);
+    } catch (error) {
+      //플레이어가 존재하지 않는 경우 퇴장 요청 날림
+      sendToAll("player-quit", data.playerId);
+      console.log(error);
+    }
   });
 
   // 플레이어 본인 퇴장
   socket.on("player-quit", async (playerId: number) => {
-    await playerService.deletePlayerByPlayerId(typeEnsure(playerId));
-    sendWithoutMe(socket, "player-quit", playerId);
-
+    try {
+      await playerService.deletePlayerByPlayerId(typeEnsure(playerId));
+      sendWithoutMe(socket, "player-quit", playerId);
+    } catch (error) {
+      //플레이어 삭제에 실패하면 에러 메세지
+      console.error(error);
+    }
     // playerId가 올바른 input이 아니라면 어떻게 해야할지
     // 논의가 필요합니다.
   });
@@ -221,13 +228,14 @@ io.on("connection", (socket: Socket) => {
           for (const player of result) {
             const mySocketId: string = player.socketId;
             const { socketId, ...playerResponse } = player;
+            //싱크 맞추는 부분에 대한 최적화 필요
             sendToMe(mySocketId, "player-status-sync", playerResponse);
 
             // 게임 오버인 경우
             if (player.isGameOver) {
               console.log("game-over");
               const gameOverResponse = await playerService.getGameOver(result);
-              sendToMe(player.socketId, "game-over", gameOverResponse);
+              sendToMe(mySocketId, "game-over", gameOverResponse);
               sendWithoutMe(socket, "player-quit", player.playerId);
               await playerService.deletePlayerByPlayerId(player.playerId);
             }

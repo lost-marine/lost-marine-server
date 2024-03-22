@@ -24,6 +24,7 @@ import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
 import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/connect";
 import { playerToArea, toPlayerAttackResponse, updateAttackerInfo, updateDefenderInfo, updatePlayerInfo } from "@/feat/player";
+import { error } from "console";
 
 @Service()
 export class PlayerService {
@@ -167,6 +168,8 @@ export class PlayerService {
         updatePlayerInfo(item, player);
         await updatePlayer(item);
       }
+    } else {
+      throw new Error("PLAYER_NOT_FOUND");
     }
 
     return await this.getPlayerList();
@@ -273,7 +276,11 @@ export class PlayerService {
    * @param {number} playerId
    */
   async deletePlayerByPlayerId(playerId: number): Promise<void> {
-    await deletePlayer(playerId);
+    try {
+      await deletePlayer(playerId);
+    } catch (error) {
+      throw new Error("PLAYER_NOT_FOUND");
+    }
   }
 
   /**
