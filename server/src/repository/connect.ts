@@ -1,19 +1,27 @@
 import { type Player } from "@/classes/player";
-import { createClient } from "redis";
-const client = createClient();
+import redis from "redis";
 
-client.on("error", (err) => {
-  console.log("Redis Client Error", err);
+const playerKey: string = "player:";
+
+const client = redis.createClient({
+  url: "redis://127.0.0.1:6379",
+  // url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+  password: "lostmarine"
+});
+client.on("error", (err: any) => {
+  console.log("redis client error", err);
 });
 
 async function initializeClient(): Promise<void> {
   await client.connect();
+  console.info("Redis connected!");
 }
-initializeClient().catch((error) => {
-  console.error(error);
-});
 
-const playerKey: string = "player:";
+initializeClient()
+  .then(async () => {})
+  .catch((error) => {
+    console.error(error);
+  });
 
 export async function existPlayer(playerId: number): Promise<boolean> {
   let result: boolean = false;
@@ -59,14 +67,17 @@ export async function getPlayerList(): Promise<Player[]> {
   const playerKeys = await client.keys(playerKey + "*");
   const playerList: Player[] = [];
 
-  // 각 플레이어 키에 대해 값을 가져와 Map에 추가
-  for (const key of playerKeys) {
-    const value = await client.get(key);
-    if (value !== null) {
-      const playerObject: Player = JSON.parse(value);
-      playerList.push(playerObject);
-    } // 값이 null인 경우 빈 문자열로 설정
+  if (playerKeys !== undefined) {
+    // 각 플레이어 키에 대해 값을 가져와 Map에 추가
+    for (const key of playerKeys) {
+      const value = await client.get(key);
+      if (value !== null) {
+        const playerObject: Player = JSON.parse(value);
+        playerList.push(playerObject);
+      } // 값이 null인 경우 빈 문자열로 설정
+    }
   }
+
   return playerList;
 }
 

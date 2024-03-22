@@ -121,6 +121,7 @@ io.on("connection", (socket: Socket) => {
           playerService
             .addPlayer(player, socket.id)
             .then((addResult) => {
+              console.log(addResult);
               const gameStartReq: PlayerResponse | null = addResult;
 
               if (gameStartReq !== null) {
