@@ -152,16 +152,12 @@ io.on("connection", (socket: Socket) => {
   // game start
 
   // 플레이어 본인 위치 전송
-  socket.on("my-position-sync", (data: Player) => {
-    playerService
-      .updatePlayerInfo(data)
-      .then((result) => {
-        // 다른 플레이어에게 변경사항 알려줌
-        sendWithoutMe(socket, "others-position-sync", result);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+  socket.on("my-position-sync", async (data: Player) => {
+    const result = await playerService.updatePlayerInfo(data);
+
+    // 다른 플레이어에게 변경사항 알려줌
+    sendWithoutMe(socket, "others-position-sync", result);
+
     // TO-DO: 플레이어가 서버에서 관리하지 않은 미검증된 사용자의 요청인 경우
     // 처리 방법 상의가 필요합니다.
   });
@@ -176,17 +172,11 @@ io.on("connection", (socket: Socket) => {
   });
 
   // 새로고침이나 창닫음으로 연결이 끊기는 경우
-  socket.on("disconnect", () => {
-    playerService
-      .deletePlayerBySocketId(socket.id)
-      .then((result) => {
-        if (result !== -1) {
-          sendWithoutMe(socket, "player-quit", result);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+  socket.on("disconnect", async () => {
+    const result = await playerService.deletePlayerBySocketId(socket.id);
+    if (result !== -1) {
+      sendWithoutMe(socket, "player-quit", result);
+    }
   });
 
   // 플랑크톤 섭취 이벤트
@@ -214,59 +204,42 @@ io.on("connection", (socket: Socket) => {
   });
 
   // 플레이어 간 공격
-  socket.on("player-crash", (data: PlayerCrashRequest, callback) => {
+  socket.on("player-crash", async (data: PlayerCrashRequest, callback) => {
     const validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
     };
 
-    playerService
-      .isCrashValidate(data)
-      .then(() => {
-        // 충돌 검증이 성공적인 경우만 공격 시도
-        if (validateResponse.isSuccess) {
-          // const result: PlayerAttackResponse[] | undefined = playerService.attackPlayer(data);
-          playerService
-            .attackPlayer(data)
-            .then((result) => {
-              if (result !== undefined && result.length === 2) {
-                // 플레이어 상태 정보 수정
-                result.forEach((player) => {
-                  console.log(result);
-                  const mySocketId: string = player.socketId;
-                  const { socketId, ...playerResponse } = player;
-                  sendToMe(mySocketId, "player-status-sync", playerResponse);
+    await playerService.isCrashValidate(data);
 
-                  // 게임 오버인 경우
-                  if (player.isGameOver) {
-                    console.log("game-over");
-                    playerService
-                      .getGameOver(result)
-                      .then((gameOverResponse) => {
-                        sendToMe(player.socketId, "game-over", gameOverResponse);
-                        sendWithoutMe(socket, "player-quit", player.playerId);
-                        playerService.deletePlayerByPlayerId(player.playerId);
-                      })
-                      .catch((error) => {
-                        console.error(error);
-                      });
-                  }
-                });
-              }
-            })
-            .catch((error) => {
-              console.error(error);
-            });
+    if (validateResponse.isSuccess) {
+      const result = await playerService.attackPlayer(data);
+
+      if (result !== undefined && result.length === 2) {
+        // 플레이어 상태 정보 수정
+        for (const player of result) {
+          console.log(result);
+          const mySocketId: string = player.socketId;
+          const { socketId, ...playerResponse } = player;
+          sendToMe(mySocketId, "player-status-sync", playerResponse);
+
+          // 게임 오버인 경우
+          if (player.isGameOver) {
+            console.log("game-over");
+
+            const gameOverResponse = await playerService.getGameOver(result);
+            sendToMe(player.socketId, "game-over", gameOverResponse);
+            sendWithoutMe(socket, "player-quit", player.playerId);
+            playerService.deletePlayerByPlayerId(player.playerId);
+          }
         }
-      })
-      .catch((error) => {
-        console.log(error);
-        validateResponse.isSuccess = false;
-        validateResponse.msg = getErrorMessage(error);
-      })
-      .finally(() => {
-        callback(validateResponse);
-      });
+      }
+    } else {
+      validateResponse.isSuccess = false;
+      validateResponse.msg = getErrorMessage(error);
+    }
+
+    callback(validateResponse);
   });
 
   socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
