@@ -25,6 +25,7 @@ import { SPECIES_ASSET } from "./constants/asset";
 import { getErrorMessage, getSuccessMessage } from "./message/message-handler";
 import { typeEnsure, recordEnsure } from "@/util/assert";
 import g from "@/types/global";
+import { error } from "console";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -84,69 +85,44 @@ io.on("connection", (socket: Socket) => {
   }
 
   // 닉네임 확인
-  socket.on("nickname-validate", (nickname: NicknameRequest, callback) => {
+  socket.on("nickname-validate", async (nickname: NicknameRequest, callback) => {
     let validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("NICKNAME_VALIDATE_SUCCESS")
     };
-    playerService
-      .validateNickName(typeEnsure(nickname, "INVALID_INPUT"))
-      .then((result) => {
-        validateResponse = result;
-      })
-      .catch((error) => {
-        validateResponse.isSuccess = false;
-        validateResponse.msg = getErrorMessage(error);
-      })
-      .finally(() => {
-        callback(validateResponse);
-      });
+    const result = await playerService.validateNickName(typeEnsure(nickname, "INVALID_INPUT"));
+
+    validateResponse = result;
+
+    if (!validateResponse.isSuccess) {
+      validateResponse.isSuccess = false;
+      validateResponse.msg = getErrorMessage(error);
+    }
+    callback(validateResponse);
   });
 
   // 참가자 본인 입장(소켓 연결)
-  socket.on("player-enter", (player: Player, callback) => {
+  socket.on("player-enter", async (player: Player, callback) => {
     const validResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("PLAYER_ENTER_SUCCESS")
     };
-
-    playerService
-      .validateNickName(typeEnsure(player, "INVALID_INPUT"))
-      .then((result) => {
-        console.log(result);
-
-        if (result.isSuccess) {
-          void socket.join(roomId);
-          console.log("룸 입장");
-          playerService
-            .addPlayer(player, socket.id)
-            .then((addResult) => {
-              console.log(addResult);
-              const gameStartReq: PlayerResponse | null = addResult;
-
-              if (gameStartReq !== null) {
-                const planktonList: Plankton[] = Array.from(g.planktonList.values());
-                console.log(gameStartReq.myInfo);
-                sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
-                sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
-              }
-            })
-            .catch((error) => {
-              console.error("값 못받아옴 ", error);
-              validResponse.isSuccess = false;
-              validResponse.msg = getErrorMessage(error);
-              callback(validResponse);
-            });
-        } else {
-          throw new Error("INVALID_INPUT");
-        }
-      })
-      .catch((error) => {
-        validResponse.isSuccess = false;
-        validResponse.msg = getErrorMessage(error);
-        callback(validResponse);
-      });
-    console.log("끝");
+    const result = await playerService.validateNickName(typeEnsure(player, "INVALID_INPUT"));
+    if (result.isSuccess) {
+      void socket.join(roomId);
+      const addResult = await playerService.addPlayer(player, socket.id);
+      const gameStartReq: PlayerResponse | null = addResult;
+      if (gameStartReq !== null) {
+        const planktonList: Plankton[] = Array.from(g.planktonList.values());
+        console.log(gameStartReq.myInfo);
+        sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
+        sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+      }
+    } else {
+      validResponse.isSuccess = false;
+      validResponse.msg = getErrorMessage(error);
+      callback(validResponse);
+    }
   });
   // 진화요청(Client→ Server)
   socket.on("player-evolution", (data: EvolveRequest, callback) => {
