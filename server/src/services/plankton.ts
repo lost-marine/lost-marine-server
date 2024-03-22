@@ -9,6 +9,7 @@ import { type Area } from "@/classes/area";
 import { MapService } from "./map";
 import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
+import { error } from "console";
 
 @Service()
 export class PlanktonService {
@@ -75,7 +76,7 @@ export class PlanktonService {
    * @param {number} planktonId 잡아먹힌 플랑크톤 id
    * @returns {number}
    */
-  eatedPlankton(planktonId: number, playerId: number): PlanktonEatResponse {
+  async eatedPlankton(planktonId: number, playerId: number): Promise<PlanktonEatResponse> {
     if (g.planktonList != null && Boolean(g.planktonList.has(planktonId))) {
       const planktonInfo: Plankton = typeEnsure(g.planktonList.get(planktonId));
       g.planktonList?.delete(planktonId);
@@ -83,14 +84,17 @@ export class PlanktonService {
       this.eatedPlanktonCnt++;
 
       const playerService = Container.get<PlayerService>(PlayerService);
-      const player = playerService.eatPlankton(playerId);
-      const result: PlanktonEatResponse = {
-        isSuccess: true,
-        player,
-        msg: "섭취에 성공했습니다."
-      };
-
-      return result;
+      try {
+        const player = await playerService.eatPlankton(playerId);
+        const result: PlanktonEatResponse = {
+          isSuccess: true,
+          player,
+          msg: "섭취에 성공했습니다."
+        };
+        return result;
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     return { isSuccess: false, msg: "섭취에 실패했습니다." };

@@ -26,6 +26,7 @@ import { getErrorMessage, getSuccessMessage } from "./message/message-handler";
 import { typeEnsure, recordEnsure } from "@/util/assert";
 import g from "@/types/global";
 import { error } from "console";
+import { getPlayer, setPlayer } from "./repository/connect";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -80,7 +81,7 @@ Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 2));
 io.on("connection", (socket: Socket) => {
   const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
-  if (g.playerList?.size === 0) {
+  if (playerService.count === 0) {
     planktonManager.initPlankton();
   }
 
@@ -125,7 +126,7 @@ io.on("connection", (socket: Socket) => {
     }
   });
   // 진화요청(Client→ Server)
-  socket.on("player-evolution", (data: EvolveRequest, callback) => {
+  socket.on("player-evolution", async (data: EvolveRequest, callback) => {
     let validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("PLAYER_EVOLVE_SUCCESS")
@@ -133,12 +134,12 @@ io.on("connection", (socket: Socket) => {
 
     try {
       recordEnsure(data, "INVALID_INPUT");
-      const beforeEvolvePlayer: Player = typeEnsure(g.playerList.get(data.playerId), "CANNOT_FIND_PLAYER");
+      const beforeEvolvePlayer: Player = typeEnsure(await getPlayer(data.playerId), "CANNOT_FIND_PLAYER");
       validateResponse = playerService.validateEvolution(data.speciesId, beforeEvolvePlayer);
       if (validateResponse.isSuccess) {
         playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
         const { socketId, ...playerResponse } = beforeEvolvePlayer;
-        g.playerList.set(data.playerId, beforeEvolvePlayer);
+        await setPlayer(data.playerId, beforeEvolvePlayer);
         sendToMe(beforeEvolvePlayer.socketId, "player-status-sync", playerResponse);
       }
     } catch (error: unknown) {
@@ -180,14 +181,14 @@ io.on("connection", (socket: Socket) => {
   });
 
   // 플랑크톤 섭취 이벤트
-  socket.on("plankton-eat", (data: { playerId: number; planktonId: number }, callback) => {
+  socket.on("plankton-eat", async (data: { playerId: number; planktonId: number }, callback) => {
     let result: PlanktonEatResponse = {
       isSuccess: true,
       msg: getSuccessMessage("EAT_PLANKTON_SUCCESS")
     };
     try {
       recordEnsure(data, "INVALID_INPUT");
-      result = planktonManager.eatedPlankton(data.planktonId, data.playerId);
+      result = await planktonManager.eatedPlankton(data.planktonId, data.playerId);
     } catch (error: unknown) {
       result.isSuccess = false;
       result.msg = getErrorMessage(error);
@@ -210,38 +211,38 @@ io.on("connection", (socket: Socket) => {
       msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
     };
 
-    await playerService.isCrashValidate(data);
+    try {
+      await playerService.isCrashValidate(data);
 
-    if (validateResponse.isSuccess) {
-      const result = await playerService.attackPlayer(data);
+      if (validateResponse.isSuccess) {
+        const result = await playerService.attackPlayer(data);
+        if (result !== undefined && result.length === 2) {
+          // 플레이어 상태 정보 수정
+          for (const player of result) {
+            const mySocketId: string = player.socketId;
+            const { socketId, ...playerResponse } = player;
+            sendToMe(mySocketId, "player-status-sync", playerResponse);
 
-      if (result !== undefined && result.length === 2) {
-        // 플레이어 상태 정보 수정
-        for (const player of result) {
-          console.log(result);
-          const mySocketId: string = player.socketId;
-          const { socketId, ...playerResponse } = player;
-          sendToMe(mySocketId, "player-status-sync", playerResponse);
-
-          // 게임 오버인 경우
-          if (player.isGameOver) {
-            console.log("game-over");
-            const gameOverResponse = await playerService.getGameOver(result);
-            sendToMe(player.socketId, "game-over", gameOverResponse);
-            sendWithoutMe(socket, "player-quit", player.playerId);
-            await playerService.deletePlayerByPlayerId(player.playerId);
+            // 게임 오버인 경우
+            if (player.isGameOver) {
+              console.log("game-over");
+              const gameOverResponse = await playerService.getGameOver(result);
+              sendToMe(player.socketId, "game-over", gameOverResponse);
+              sendWithoutMe(socket, "player-quit", player.playerId);
+              await playerService.deletePlayerByPlayerId(player.playerId);
+            }
           }
         }
       }
-    } else {
+    } catch (error) {
       validateResponse.isSuccess = false;
       validateResponse.msg = getErrorMessage(error);
+    } finally {
+      callback(validateResponse);
     }
-
-    callback(validateResponse);
   });
 
-  socket.on("chat-message-send", (data: ChatMessageSendResponse, callback) => {
+  socket.on("chat-message-send", async (data: ChatMessageSendResponse) => {
     const response: ValidateRespone = {
       isSuccess: false,
       msg: "유효하지 않은 플레이어입니다."
@@ -256,7 +257,7 @@ io.on("connection", (socket: Socket) => {
 
     try {
       recordEnsure(data, "INVALID_INPUT");
-      const sender: Player = typeEnsure(g.playerList.get(data.playerId), "CANNOT_FIND_PLAYER");
+      const sender: Player = typeEnsure(await getPlayer(data.playerId), "CANNOT_FIND_PLAYER");
       const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(sender.speciesId), "CANNOT_FIND_TIER");
 
       response.isSuccess = true;
@@ -273,8 +274,6 @@ io.on("connection", (socket: Socket) => {
       response.isSuccess = false;
       response.msg = getErrorMessage(error);
     } finally {
-      callback(response);
-
       if (response.isSuccess) {
         sendToAll("chat-message-receive", sendFormat);
       }

@@ -123,7 +123,6 @@ export class PlayerService {
    */
   async getPlayerList(): Promise<Player[]> {
     const playerMap = await getPlayerList();
-    console.log(playerMap);
     return playerMap;
   }
 
@@ -164,7 +163,6 @@ export class PlayerService {
     // 플레이어 존재하는 경우에만
     if (await existPlayer(playerId)) {
       const item: Player | null = await getPlayer(playerId);
-      console.log(item);
       if (item !== null) {
         updatePlayerInfo(item, player);
         await updatePlayer(item);
@@ -204,9 +202,6 @@ export class PlayerService {
    * @returns {Player[]}
    */
   async attackPlayer(request: PlayerCrashRequest): Promise<PlayerAttackResponse[] | undefined> {
-    console.log(await getPlayer(request.playerAId));
-    console.log(await getPlayer(request.playerBId));
-
     const playerA: Player = typeEnsure(await getPlayer(request.playerAId), "CANNOT_FIND_PLAYER");
     const playerB: Player = typeEnsure(await getPlayer(request.playerBId), "CANNOT_FIND_PLAYER");
 
@@ -233,8 +228,6 @@ export class PlayerService {
    * @returns {plyaerGameOverResponse}
    */
   async getGameOver(playerList: PlayerAttackResponse[]): Promise<playerGameOverResponse> {
-    console.log(playerList[0].playerId + " " + playerList[1].playerId);
-
     const attackPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
     const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
 
@@ -262,11 +255,13 @@ export class PlayerService {
    * @param {number} playerId
    * @param {number} planktonId
    */
-  eatPlankton(playerId: number): Player {
-    const player: Player = typeEnsure(g.playerList?.get(playerId), "CANNOT_FIND_PLAYER");
+  async eatPlankton(playerId: number): Promise<Player> {
+    const player: Player = typeEnsure(await getPlayer(playerId), "CANNOT_FIND_PLAYER");
 
     if (player !== undefined) {
       player.planktonCount++;
+      player.point++;
+      updatePlayer(player);
     }
     return player;
   }

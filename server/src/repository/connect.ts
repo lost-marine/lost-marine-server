@@ -4,9 +4,9 @@ import redis from "redis";
 const playerKey: string = "player:";
 
 const client = redis.createClient({
-  url: "redis://127.0.0.1:6379",
+  url: "redis://127.0.0.1:6379"
   // url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-  password: "lostmarine"
+  // password: "lostmarine"
 });
 client.on("error", (err: any) => {
   console.log("redis client error", err);
@@ -53,7 +53,6 @@ export async function getPlayer(key: number): Promise<Player | null> {
 
     if (playerData !== null) {
       const playerObject: Player = JSON.parse(playerData);
-      console.log(playerObject);
       return playerObject;
     }
     return playerData;
