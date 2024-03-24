@@ -9,6 +9,10 @@ export const errorMessages: Record<string, Record<string, string>> = {
     ko: "중복된 아이디가 존재합니다"
   },
 
+  PLAYER_NO_EXIST_ERROR: {
+    en: "Player does not exist",
+    ko: "플레이어가 존재하지 않습니다"
+  },
   ATTACK_PLAYER_NO_EXIST_ERROR: {
     en: "Player does not exist",
     ko: "플레이어가 존재하지 않습니다"

@@ -26,7 +26,7 @@ import { getErrorMessage, getSuccessMessage } from "./message/message-handler";
 import { typeEnsure, recordEnsure } from "@/util/assert";
 import g from "@/types/global";
 import { error } from "console";
-import { getPlayer, setPlayer } from "./repository/connect";
+import { getPlayer, setPlayer } from "./repository/redis";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트

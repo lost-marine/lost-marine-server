@@ -2,7 +2,7 @@ import "reflect-metadata";
 import Container, { Service } from "typedi";
 import { Player } from "@/classes/player";
 import {
-  type PlayerCrashRequest,
+  PlayerCrashRequest,
   type ValidateRespone,
   type PlayerResponse,
   type PlayerAttackResponse,
@@ -21,7 +21,7 @@ import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
-import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/connect";
+import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/redis";
 import {
   evolvePlayer,
   playerToArea,
@@ -32,6 +32,7 @@ import {
   updatePlayerInfo
 } from "@/feat/player";
 import { error } from "console";
+import { request } from "http";
 
 @Service()
 export class PlayerService {
@@ -173,15 +174,18 @@ export class PlayerService {
     const playerId = player.playerId;
     // 플레이어 존재하는 경우에만
     if (await existPlayer(playerId)) {
-      const item: Player | null = await getPlayer(playerId);
-      if (item !== null) {
-        updatePlayerInfo(item, player);
-        await updatePlayer(item);
+      try {
+        const item: Player | null = await getPlayer(playerId);
+        if (item !== null) {
+          updatePlayerInfo(item, player);
+          await updatePlayer(item);
+        }
+      } catch {
+        throw new Error("PLAYER_NOT_FOUND");
       }
-    } else {
-      throw new Error("PLAYER_NOT_FOUND");
+      return await this.getPlayerList();
     }
-    return await this.getPlayerList();
+    return [];
   }
 
   /** Description placeholder
@@ -192,10 +196,6 @@ export class PlayerService {
    * @param {PlayerCrashRequest} data
    */
   async isCrashValidate(request: PlayerCrashRequest): Promise<void> {
-    // 플레이어 두 명이 playerList에 존재하는지 검증
-    if (request === undefined || getPlayer(request.playerAId) === undefined || getPlayer(request.playerBId) === undefined) {
-      throw new Error("ATTACK_PLAYER_NO_EXIST_ERROR");
-    }
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
     const firstPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
     const secondPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
