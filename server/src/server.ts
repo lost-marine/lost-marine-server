@@ -218,36 +218,49 @@ io.on("connection", (socket: Socket) => {
       isSuccess: true,
       msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
     };
+    //요청이 왔는데 플레이어가 존하지않으면 나갔다고 처리
+    let isExist: boolean = true;
+    if (data.playerAId === undefined) {
+      isExist = false;
+      sendWithoutMe(socket, "player-quit", data.playerAId);
+    }
+    if (data.playerBId === undefined) {
+      isExist = false;
+      sendWithoutMe(socket, "player-quit", data.playerBId);
+    }
+    if (isExist) {
+      try {
+        await playerService.isCrashValidate(data);
 
-    try {
-      await playerService.isCrashValidate(data);
+        if (validateResponse.isSuccess) {
+          const result = await playerService.attackPlayer(data);
+          if (result !== undefined && result.length === 2) {
+            // 플레이어 상태 정보 수정
+            for (const player of result) {
+              const mySocketId: string = player.socketId;
+              const { socketId, ...playerResponse } = player;
+              //싱크 맞추는 부분에 대한 최적화 필요
+              sendToMe(mySocketId, "player-status-sync", playerResponse);
 
-      if (validateResponse.isSuccess) {
-        const result = await playerService.attackPlayer(data);
-        if (result !== undefined && result.length === 2) {
-          // 플레이어 상태 정보 수정
-          for (const player of result) {
-            const mySocketId: string = player.socketId;
-            const { socketId, ...playerResponse } = player;
-            //싱크 맞추는 부분에 대한 최적화 필요
-            sendToMe(mySocketId, "player-status-sync", playerResponse);
-
-            // 게임 오버인 경우
-            if (player.isGameOver) {
-              console.log("game-over");
-              const gameOverResponse = await playerService.getGameOver(result);
-              sendToMe(mySocketId, "game-over", gameOverResponse);
-              sendWithoutMe(socket, "player-quit", player.playerId);
-              await playerService.deletePlayerByPlayerId(player.playerId);
+              // 게임 오버인 경우
+              if (player.isGameOver) {
+                console.log("game-over");
+                const gameOverResponse = await playerService.getGameOver(result);
+                sendToMe(mySocketId, "game-over", gameOverResponse);
+                sendWithoutMe(socket, "player-quit", player.playerId);
+                await playerService.deletePlayerByPlayerId(player.playerId);
+              }
             }
           }
         }
+      } catch (error) {
+        console.log(error);
+
+        validateResponse.isSuccess = false;
+        validateResponse.msg = getErrorMessage(error);
+      } finally {
+        callback(validateResponse);
       }
-    } catch (error) {
-      validateResponse.isSuccess = false;
-      validateResponse.msg = getErrorMessage(error);
-    } finally {
-      callback(validateResponse);
     }
   });
 

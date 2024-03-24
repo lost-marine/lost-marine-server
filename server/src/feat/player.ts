@@ -1,6 +1,6 @@
 import { Area } from "@/classes/area";
 import { type Player } from "@/classes/player";
-import { type PlayerAttackResponse } from "@/types";
+import { Species, type PlayerAttackResponse } from "@/types";
 import { createBuilder } from "@/util/builder";
 
 /**
@@ -42,7 +42,6 @@ export function playerToArea(player: Player): Area {
  */
 export function updateAttackerInfo(player: Player): void {
   player.point++;
-  player.playerCount++;
 }
 
 /**
@@ -75,4 +74,26 @@ export function toPlayerAttackResponse(player: Player): PlayerAttackResponse {
     socketId: player.socketId
   };
   return playerResponse;
+}
+
+/**
+ * 플레이어 업데이트
+ * @date 2024. 3. 22. - 오후 11:59:46
+ * @author 양소영
+ *
+ * @export
+ * @param {Player} player
+ */
+export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: Player): void {
+  attackPlayer.playerCount++;
+  attackPlayer.point += gameoverPlayer.point * 0.5;
+  attackPlayer.microplasticCount += gameoverPlayer.microplasticCount;
+}
+
+export function evolvePlayer(player: Player, targetSpecies: Species): void {
+  player.speciesId = targetSpecies.speciesId;
+  player.power = targetSpecies.power;
+  player.width = targetSpecies.width;
+  player.height = targetSpecies.height;
+  player.health = targetSpecies.health;
 }

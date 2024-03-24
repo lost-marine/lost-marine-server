@@ -21,12 +21,4 @@ export class Player extends Creature {
   isGameOver: boolean = false;
   speciesId: number = 0;
   isSleeping: boolean = true;
-
-  evolvePlayer(this: Player, targetSpecies: Species): void {
-    this.speciesId = targetSpecies.speciesId;
-    this.power = targetSpecies.power;
-    this.width = targetSpecies.width;
-    this.height = targetSpecies.height;
-    this.health = targetSpecies.health;
-  }
 }

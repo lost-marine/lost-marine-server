@@ -19,11 +19,11 @@ import { validateCanCrushArea } from "@/util/crushValid";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
-import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
 import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/connect";
 import {
+  evolvePlayer,
   playerToArea,
   toPlayerAttackResponse,
   updateAttackerInfo,
@@ -56,10 +56,12 @@ export class PlayerService {
     const speciesInfo: Species | undefined = SPECIES_ASSET.get(player.speciesId);
     if (speciesInfo === undefined) throw new Error("Invalid Player Infomation");
     const myInfo: Player = createBuilder(Player)
-      .setPlayerId(this.count++)
+      .setPlayerId(++this.count)
       .setNickname(nickname)
-      .setCenterX(spawnArea.centerX)
-      .setCenterY(spawnArea.centerY)
+      // .setCenterX(spawnArea.centerX)
+      // .setCenterY(spawnArea.centerY)
+      .setCenterX(100)
+      .setCenterY(200)
       .setSocketId(socketId)
       .setSpeciesId(player.speciesId)
       .setWidth(speciesInfo.width)
@@ -120,7 +122,8 @@ export class PlayerService {
   playerEvolution(targetSpeciesId: number, player: Player): void {
     const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(targetSpeciesId), "CANNOT_FIND_TIER");
 
-    player.evolvePlayer(targetSpecies);
+    evolvePlayer(player, targetSpecies);
+    updatePlayer(player);
   }
 
   /**
@@ -240,9 +243,9 @@ export class PlayerService {
     const attackPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
     const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
 
-    updateAttackerPlayerCount(attackPlayer);
+    updateAttackerPlayerCount(attackPlayer, gameoverPlayer);
 
-    updatePlayer(attackPlayer);
+    await updatePlayer(attackPlayer);
 
     const response: playerGameOverResponse = {
       playerId: gameoverPlayer.playerId,
@@ -274,7 +277,7 @@ export class PlayerService {
     if (player !== undefined) {
       player.planktonCount++;
       player.point++;
-      updatePlayer(player);
+      await updatePlayer(player);
     }
     return player;
   }
