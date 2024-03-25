@@ -30,6 +30,7 @@ import { getPlayer, setPlayer } from "./repository/redis";
 import { logger } from "@/util/winston";
 
 const dirname = path.resolve();
+const port: number = 3200; // 소켓 서버 포트
 const app = express();
 const roomId: string = "room0";
 
