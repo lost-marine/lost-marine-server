@@ -26,11 +26,11 @@ import {
   evolvePlayer,
   playerToArea,
   toPlayerAttackResponse,
-  updateAttackerInfo,
   updateAttackerPlayerCount,
   updateDefenderInfo,
   updatePlayerInfo
 } from "@/feat/player";
+// import _ from "lodash";
 
 @Service()
 export class PlayerService {
@@ -194,7 +194,7 @@ export class PlayerService {
   async isCrashValidate(request: PlayerCrashRequest): Promise<void> {
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
     const firstPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
-    const secondPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
+    const secondPlayer: Player = typeEnsure(await getPlayer(request.playerBId), "ATTACK_PLAYER_NO_EXIST_ERROR");
 
     if (!validateCanCrushArea(playerToArea(firstPlayer), playerToArea(secondPlayer))) {
       throw new Error("ATTACK_PLAYER_NO_COLLISION_AREA");
@@ -217,8 +217,7 @@ export class PlayerService {
     const areaB: Area = playerToArea(playerB);
 
     if (isAttacking(areaA, areaB)) {
-      updateAttackerInfo(playerA);
-      updateDefenderInfo(playerB, playerA);
+      updateDefenderInfo(playerA, playerB);
 
       await updatePlayer(playerA);
       await updatePlayer(playerB);
@@ -236,8 +235,8 @@ export class PlayerService {
    * @returns {plyaerGameOverResponse}
    */
   async getGameOver(playerList: PlayerAttackResponse[]): Promise<playerGameOverResponse> {
-    const attackPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
-    const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
+    const attackPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
+    const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
 
     updateAttackerPlayerCount(attackPlayer, gameoverPlayer);
 
