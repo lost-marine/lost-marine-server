@@ -9,6 +9,7 @@ import { type Area } from "@/classes/area";
 import { MapService } from "./map";
 import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
+import { logger } from "@/util/winston";
 
 @Service()
 export class PlanktonService {
@@ -92,7 +93,7 @@ export class PlanktonService {
         };
         return result;
       } catch (error) {
-        console.error(error);
+        logger.error("플랑크톤 섭취 에러 : " + error);
       }
     }
 

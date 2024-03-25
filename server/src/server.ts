@@ -27,10 +27,9 @@ import { typeEnsure, recordEnsure } from "@/util/assert";
 import g from "@/types/global";
 import { error } from "console";
 import { getPlayer, setPlayer } from "./repository/redis";
+import { logger } from "@/util/winston";
 
 const dirname = path.resolve();
-const port: number = 3200; // 소켓 서버 포트
-const endpoint: string = "localhost";
 const app = express();
 const roomId: string = "room0";
 
@@ -115,7 +114,8 @@ io.on("connection", (socket: Socket) => {
       const gameStartReq: PlayerResponse | null = addResult;
       if (gameStartReq !== null) {
         const planktonList: Plankton[] = Array.from(g.planktonList.values());
-        console.log(gameStartReq.myInfo);
+
+        logger.info("소켓 연결 성공 : " + JSON.stringify(addResult));
         sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
         sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
       }
@@ -162,7 +162,7 @@ io.on("connection", (socket: Socket) => {
     } catch (error) {
       // 플레이어가 존재하지 않는 경우 퇴장 요청 날림
       sendToAll("player-quit", data.playerId);
-      console.log(error);
+      logger.error("플레이어가 존재하지 않음 : " + error);
     }
   });
 
@@ -173,7 +173,7 @@ io.on("connection", (socket: Socket) => {
       sendWithoutMe(socket, "player-quit", playerId);
     } catch (error) {
       // 플레이어 삭제에 실패하면 에러 메세지
-      console.error(error);
+      logger.error("플레이어 삭제 실패 : " + error);
     }
     // playerId가 올바른 input이 아니라면 어떻게 해야할지
     // 논의가 필요합니다.
@@ -244,7 +244,7 @@ io.on("connection", (socket: Socket) => {
 
               // 게임 오버인 경우
               if (player.isGameOver) {
-                console.log("game-over");
+                logger.info("게임 오버 : " + player.playerId);
                 const gameOverResponse = await playerService.getGameOver(result);
                 sendToMe(mySocketId, "game-over", gameOverResponse);
                 sendWithoutMe(socket, "player-quit", player.playerId);
@@ -254,7 +254,7 @@ io.on("connection", (socket: Socket) => {
           }
         }
       } catch (error) {
-        console.log(error);
+        logger.error("공격 시 에러" + error);
 
         validateResponse.isSuccess = false;
         validateResponse.msg = getErrorMessage(error);
@@ -343,8 +343,6 @@ const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
   socket.to(roomId).except(socket.id).emit(event, data);
 };
 
-httpServer.listen(port, () => {
-  console.log(`${endpoint}:${port}`);
-});
+httpServer.listen(port, () => {});
 
 export const viteNodeApp = app;

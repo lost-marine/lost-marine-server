@@ -31,6 +31,7 @@ import {
   updateDefenderInfo,
   updatePlayerInfo
 } from "@/feat/player";
+import { logger } from "@/util/winston";
 
 @Service()
 export class PlayerService {
@@ -64,7 +65,8 @@ export class PlayerService {
       .setWidth(speciesInfo.width)
       .setHeight(speciesInfo.height)
       .build();
-    console.log(myInfo);
+    logger.info("플레이어 생성 : " + myInfo.playerId + ", " + myInfo.nickname);
+
     return myInfo;
   }
 
@@ -154,7 +156,7 @@ export class PlayerService {
 
       return result;
     } catch (error) {
-      console.error("플레이어 추가 실패:", error);
+      logger.error("플레이어 추가 실패 : " + error);
       return null;
     }
   }
@@ -255,7 +257,7 @@ export class PlayerService {
       point: gameoverPlayer.point
     };
 
-    console.log(response);
+    logger.info("플레이어 업데이트 : " + JSON.stringify(response));
     return response;
   }
 
