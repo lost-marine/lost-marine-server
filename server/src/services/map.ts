@@ -3,6 +3,7 @@ import { type Area } from "@/classes/area";
 import { CircularQueue } from "@/util/circularQueue";
 import { validateCanCrushArea } from "@/util/crushValid";
 import g from "@/types/global";
+import { logger } from "@/util/winston";
 
 @Service()
 export class MapService {
@@ -46,7 +47,7 @@ export class MapService {
     g.playerList?.forEach((player) => {
       const existedArea: Area = player.playerToArea();
       if (validateCanCrushArea(existedArea, area)) {
-        console.log("해당 위치에 플레이어가 스폰되면 안됩니다. 스폰 위치 스킵.");
+        console.info("해당 위치에 플레이어 스폰 불가. 스폰 위치를 스킵합니다.");
         flag = false;
       }
     });
@@ -76,11 +77,10 @@ export class MapService {
         // process.exit(1);
         // return false;
       } else {
-        // console.log(area.centerX + ", " + area.centerY + ", " + "해당 위치에 플랑크톤이 스폰되는게 맞습니다. 걱정하지 마세요.");
         return true;
       }
     } else {
-      console.log("plankton spawn type error.");
+      logger.error("플랑크톤 스폰 에러");
       return false;
     }
   }

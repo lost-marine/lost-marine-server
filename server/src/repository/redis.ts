@@ -1,26 +1,29 @@
 import { type Player } from "@/classes/player";
 import redis from "redis";
+import dotenv from "dotenv";
+import { logger } from "@/util/winston";
 
 const playerKey: string = "player:";
 
+dotenv.config();
+
 const client = redis.createClient({
-  url: "redis://127.0.0.1:6379",
-  // url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-  password: "lostmarine"
+  url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+  password: `${process.env.REDIS_PASS}`
 });
 client.on("error", (err: any) => {
-  console.log("redis client error", err);
+  logger.error("redis client error : " + err);
 });
 
 async function initializeClient(): Promise<void> {
   await client.connect();
-  console.info("Redis connected!");
+  logger.info("Redis connected!");
 }
 
 initializeClient()
   .then(async () => {})
   .catch((error) => {
-    console.error(error);
+    logger.error("client initalize error : " + error);
   });
 
 /**
@@ -62,7 +65,7 @@ export async function setPlayer(playerId: number, player: Player): Promise<void>
     // Redis에 JSON 문자열을 저장
     await client.set(playerKey + playerId, playerJSON);
   } catch (error) {
-    console.error("레디스에 플레이어를 저장 중에 에러가 발생했습니다", error);
+    logger.error("플레이어 저장시 에러 : " + error);
   }
 }
 
@@ -117,7 +120,7 @@ export async function getPlayerList(): Promise<Player[]> {
 
     return playerList;
   } catch (error) {
-    console.error(error);
+    logger.error("플레이어 리스트 에러 : " + error);
     return [];
   }
 }
@@ -140,7 +143,7 @@ export async function updatePlayer(player: Player): Promise<boolean> {
       await client.set(playerKey + player.playerId, playerJSON);
     }
   } catch (error) {
-    console.error("플레이어가 정보 갱신에 실패했습니다.", error);
+    logger.error("플레이어 정보 갱신 실패 : " + error);
   }
   return result;
 }
@@ -161,6 +164,6 @@ export async function deletePlayer(playerId: number): Promise<void> {
       await client.del(playerKey + playerId);
     }
   } catch (error) {
-    console.error("플레이어 삭제에 실패했습니다:", error);
+    logger.error("플레이어 삭제 실패 : " + error);
   }
 }
