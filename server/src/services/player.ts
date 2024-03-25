@@ -6,9 +6,9 @@ import {
   type ValidateRespone,
   type PlayerResponse,
   type PlayerAttackResponse,
-  type plyaerGameOverResponse,
   type Species,
-  type NicknameRequest
+  type NicknameRequest,
+  type playerGameOverResponse
 } from "@/types";
 import { MapService } from "./map";
 // import { type Position } from "@/classes/position";
@@ -19,9 +19,19 @@ import { validateCanCrushArea } from "@/util/crushValid";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
-import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
+import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/redis";
+import {
+  evolvePlayer,
+  playerToArea,
+  toPlayerAttackResponse,
+  updateAttackerInfo,
+  updateAttackerPlayerCount,
+  updateDefenderInfo,
+  updatePlayerInfo
+} from "@/feat/player";
+
 @Service()
 export class PlayerService {
   count: number;
@@ -45,7 +55,7 @@ export class PlayerService {
     const speciesInfo: Species | undefined = SPECIES_ASSET.get(player.speciesId);
     if (speciesInfo === undefined) throw new Error("Invalid Player Infomation");
     const myInfo: Player = createBuilder(Player)
-      .setPlayerId(this.count++)
+      .setPlayerId(++this.count)
       .setNickname(nickname)
       .setCenterX(spawnArea.centerX)
       .setCenterY(spawnArea.centerY)
@@ -65,27 +75,23 @@ export class PlayerService {
    * @param {string} nickname
    * @returns {boolean}
    */
-  validateNickName(request: NicknameRequest): ValidateRespone {
+  async validateNickName(request: NicknameRequest): Promise<ValidateRespone> {
     const nickname: string = request.nickname;
     const regexp: RegExp = /^[ㄱ-ㅎㅏ-ㅣ가-힣A-Za-z0-9]{2,12}$/;
     let isSuccess: boolean = regexp.test(nickname);
     let msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
+
     // 닉네임 중복 검사
     if (isSuccess) {
-      g.playerList?.forEach((player) => {
-        if (player?.nickname === nickname) {
+      const playerMap = await getPlayerList();
+      playerMap.forEach((player) => {
+        if (player.nickname === nickname) {
           isSuccess = false;
           msg = "중복된 아이디입니다.";
         }
       });
     }
-
-    const response: ValidateRespone = {
-      isSuccess,
-      msg
-    };
-
-    return response;
+    return { isSuccess, msg };
   }
 
   /**
@@ -110,10 +116,11 @@ export class PlayerService {
     };
   }
 
-  playerEvolution(targetSpeciesId: number, player: Player): void {
+  async playerEvolution(targetSpeciesId: number, player: Player): Promise<void> {
     const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(targetSpeciesId), "CANNOT_FIND_TIER");
 
-    player.evolvePlayer(targetSpecies);
+    evolvePlayer(player, targetSpecies);
+    await updatePlayer(player);
   }
 
   /**
@@ -122,9 +129,9 @@ export class PlayerService {
    *
    * @returns {Player[]}
    */
-  getPlayerList(): Player[] {
-    const valuesArray = Array.from(g.playerList?.values() as Iterable<Player>);
-    return Array.from(valuesArray);
+  async getPlayerList(): Promise<Player[]> {
+    const playerMap = await getPlayerList();
+    return playerMap;
   }
 
   /**
@@ -135,16 +142,21 @@ export class PlayerService {
    * @param {string} socketId
    * @returns {PlayerResponse}
    */
-  addPlayer(player: Player, socketId: string): PlayerResponse {
-    const myInfo = this.initPlayer(player, socketId);
-    g.playerList?.set(myInfo.playerId, myInfo);
-    const playerList = this.getPlayerList();
+  async addPlayer(player: Player, socketId: string): Promise<PlayerResponse | null> {
+    try {
+      const myInfo = this.initPlayer(player, socketId);
+      const result: PlayerResponse = { myInfo, playerList: [] };
 
-    const result: PlayerResponse = {
-      myInfo,
-      playerList
-    };
-    return result;
+      await setPlayer(myInfo.playerId, myInfo);
+
+      const playerMap = await getPlayerList();
+      result.playerList = playerMap;
+
+      return result;
+    } catch (error) {
+      console.error("플레이어 추가 실패:", error);
+      return null;
+    }
   }
 
   /**
@@ -154,14 +166,22 @@ export class PlayerService {
    * @param {Player} player
    * @returns {Player[]}
    */
-  updatePlayerInfo(player: Player): void {
+  async updatePlayerInfo(player: Player): Promise<Player[]> {
     const playerId = player.playerId;
     // 플레이어 존재하는 경우에만
-    if (g.playerList.has(playerId)) {
-      const item: Player = typeEnsure(g.playerList.get(playerId), "CANNOT_FIND_PLAYER");
-      item?.updatePlayerInfo(player);
-      g.playerList?.set(playerId, item);
+    if (await existPlayer(playerId)) {
+      try {
+        const item: Player | null = await getPlayer(playerId);
+        if (item !== null) {
+          updatePlayerInfo(item, player);
+          await updatePlayer(item);
+        }
+      } catch {
+        throw new Error("PLAYER_NOT_FOUND");
+      }
+      return await this.getPlayerList();
     }
+    return [];
   }
 
   /** Description placeholder
@@ -171,19 +191,12 @@ export class PlayerService {
    *
    * @param {PlayerCrashRequest} data
    */
-  isCrashValidate(request: PlayerCrashRequest): void {
-    // 플레이어 두 명이 playerList에 존재하는지 검증
-    if (
-      request === undefined ||
-      g.playerList.get(request.playerAId) === undefined ||
-      g.playerList.get(request.playerBId) === undefined
-    ) {
-      throw new Error("ATTACK_PLAYER_NO_EXIST_ERROR");
-    }
+  async isCrashValidate(request: PlayerCrashRequest): Promise<void> {
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
-    const firstPlayer: Player = typeEnsure(g.playerList.get(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
-    const secondPlayer: Player = typeEnsure(g.playerList.get(request.playerBId), "ATTACK_PLAYER_NO_EXIST_ERROR");
-    if (!validateCanCrushArea(firstPlayer.playerToArea(), secondPlayer.playerToArea())) {
+    const firstPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
+    const secondPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
+
+    if (!validateCanCrushArea(playerToArea(firstPlayer), playerToArea(secondPlayer))) {
       throw new Error("ATTACK_PLAYER_NO_COLLISION_AREA");
     }
   }
@@ -196,18 +209,21 @@ export class PlayerService {
    * @param {PlayerCrashRequest} data
    * @returns {Player[]}
    */
-  attackPlayer(request: PlayerCrashRequest): PlayerAttackResponse[] | undefined {
-    const playerA: Player = typeEnsure(g.playerList.get(request.playerAId), "CANNOT_FIND_PLAYER");
-    const playerB: Player = typeEnsure(g.playerList.get(request.playerBId), "CANNOT_FIND_PLAYER");
+  async attackPlayer(request: PlayerCrashRequest): Promise<PlayerAttackResponse[] | undefined> {
+    const playerA: Player = typeEnsure(await getPlayer(request.playerAId), "CANNOT_FIND_PLAYER");
+    const playerB: Player = typeEnsure(await getPlayer(request.playerBId), "CANNOT_FIND_PLAYER");
 
-    const areaA: Area = playerA.playerToArea();
-    const areaB: Area = playerB.playerToArea();
+    const areaA: Area = playerToArea(playerA);
+    const areaB: Area = playerToArea(playerB);
 
     if (isAttacking(areaA, areaB)) {
-      playerA.updateAttackerPoint();
-      playerB.updateDefenderInfo(playerA);
+      updateAttackerInfo(playerA);
+      updateDefenderInfo(playerB, playerA);
 
-      return [playerA.toPlayerAttackResponse(), playerB.toPlayerAttackResponse()];
+      await updatePlayer(playerA);
+      await updatePlayer(playerB);
+
+      return [toPlayerAttackResponse(playerA), toPlayerAttackResponse(playerB)];
     }
   }
 
@@ -219,13 +235,15 @@ export class PlayerService {
    * @param {PlayerAttackResponse} player
    * @returns {plyaerGameOverResponse}
    */
-  getGameOver(playerList: PlayerAttackResponse[]): plyaerGameOverResponse {
-    const attackPlayer: Player = typeEnsure(g.playerList.get(playerList[0].playerId), "CANNOT_FIND_PLAYER");
-    const gameoverPlayer: Player = typeEnsure(g.playerList.get(playerList[1].playerId), "CANNOT_FIND_PLAYER");
+  async getGameOver(playerList: PlayerAttackResponse[]): Promise<playerGameOverResponse> {
+    const attackPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
+    const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
 
-    attackPlayer.updateAttackerPlayerCount();
+    updateAttackerPlayerCount(attackPlayer, gameoverPlayer);
 
-    const response: plyaerGameOverResponse = {
+    await updatePlayer(attackPlayer);
+
+    const response: playerGameOverResponse = {
       playerId: gameoverPlayer.playerId,
       playerNickname: gameoverPlayer.nickname,
       attackerNickname: attackPlayer.nickname,
@@ -249,11 +267,13 @@ export class PlayerService {
    * @param {number} playerId
    * @param {number} planktonId
    */
-  eatPlankton(playerId: number): Player {
-    const player: Player = typeEnsure(g.playerList?.get(playerId), "CANNOT_FIND_PLAYER");
+  async eatPlankton(playerId: number): Promise<Player> {
+    const player: Player = typeEnsure(await getPlayer(playerId), "CANNOT_FIND_PLAYER");
 
     if (player !== undefined) {
       player.planktonCount++;
+      player.point++;
+      await updatePlayer(player);
     }
     return player;
   }
@@ -264,8 +284,12 @@ export class PlayerService {
    *
    * @param {number} playerId
    */
-  deletePlayerByPlayerId(playerId: number): void {
-    g.playerList?.delete(playerId);
+  async deletePlayerByPlayerId(playerId: number): Promise<void> {
+    try {
+      await deletePlayer(playerId);
+    } catch (error) {
+      throw new Error("PLAYER_NOT_FOUND");
+    }
   }
 
   /**
@@ -275,15 +299,18 @@ export class PlayerService {
    * @param {string} socketId
    * @returns {number}
    */
-  deletePlayerBySocketId(socketId: string): number {
+  async deletePlayerBySocketId(socketId: string): Promise<number> {
     let playerId: number = -1;
 
-    g.playerList?.forEach((player, key) => {
+    const playerMap = await getPlayerList();
+
+    playerMap.forEach((player) => {
       if (player?.socketId === socketId) {
-        playerId = key;
-        g.playerList?.delete(key);
+        playerId = player.playerId;
+        void this.deletePlayerByPlayerId(player.playerId);
       }
     });
+
     return playerId;
   }
 }
