@@ -51,10 +51,10 @@ function crushCreatureAndFlankton(area1: Area, area2: Area): boolean {
  * @returns {boolean}
  */
 function crushCreatureAndCreature(area1: Area, area2: Area): boolean {
-  const rectangleFromArea1 = Bodies.rectangle(area1.centerX, area1.centerY, area1.width + 5, area1.height + 5, {
+  const rectangleFromArea1 = Bodies.rectangle(area1.centerX, area1.centerY, area1.height + 5, area1.width + 5, {
     angle: (area1.direction * 45 * Math.PI) / 180
   }).bounds;
-  const rectangleFromArea2 = Bodies.rectangle(area2.centerX, area2.centerY, area2.width + 5, area2.height + 5, {
+  const rectangleFromArea2 = Bodies.rectangle(area2.centerX, area2.centerY, area2.height + 5, area2.width + 5, {
     angle: (area2.direction * 45 * Math.PI) / 180
   }).bounds;
 
