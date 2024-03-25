@@ -1,6 +1,6 @@
 import { Area } from "@/classes/area";
 import { type Player } from "@/classes/player";
-import { Species, type PlayerAttackResponse } from "@/types";
+import { type Species, type PlayerAttackResponse } from "@/types";
 import { createBuilder } from "@/util/builder";
 
 /**

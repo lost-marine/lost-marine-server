@@ -137,7 +137,7 @@ io.on("connection", (socket: Socket) => {
       const beforeEvolvePlayer: Player = typeEnsure(await getPlayer(data.playerId), "CANNOT_FIND_PLAYER");
       validateResponse = playerService.validateEvolution(data.speciesId, beforeEvolvePlayer);
       if (validateResponse.isSuccess) {
-        playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
+        await playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
         const { socketId, ...playerResponse } = beforeEvolvePlayer;
         await setPlayer(data.playerId, beforeEvolvePlayer);
         sendToMe(beforeEvolvePlayer.socketId, "player-status-sync", playerResponse);
@@ -160,7 +160,7 @@ io.on("connection", (socket: Socket) => {
       // 다른 플레이어에게 변경사항 알려줌
       sendWithoutMe(socket, "others-position-sync", result);
     } catch (error) {
-      //플레이어가 존재하지 않는 경우 퇴장 요청 날림
+      // 플레이어가 존재하지 않는 경우 퇴장 요청 날림
       sendToAll("player-quit", data.playerId);
       console.log(error);
     }
@@ -172,7 +172,7 @@ io.on("connection", (socket: Socket) => {
       await playerService.deletePlayerByPlayerId(typeEnsure(playerId));
       sendWithoutMe(socket, "player-quit", playerId);
     } catch (error) {
-      //플레이어 삭제에 실패하면 에러 메세지
+      // 플레이어 삭제에 실패하면 에러 메세지
       console.error(error);
     }
     // playerId가 올바른 input이 아니라면 어떻게 해야할지
@@ -218,7 +218,7 @@ io.on("connection", (socket: Socket) => {
       isSuccess: true,
       msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
     };
-    //요청이 왔는데 플레이어가 존하지않으면 나갔다고 처리
+    // 요청이 왔는데 플레이어가 존하지않으면 나갔다고 처리
     let isExist: boolean = true;
     if (data.playerAId === undefined) {
       isExist = false;
@@ -239,7 +239,7 @@ io.on("connection", (socket: Socket) => {
             for (const player of result) {
               const mySocketId: string = player.socketId;
               const { socketId, ...playerResponse } = player;
-              //싱크 맞추는 부분에 대한 최적화 필요
+              // 싱크 맞추는 부분에 대한 최적화 필요
               sendToMe(mySocketId, "player-status-sync", playerResponse);
 
               // 게임 오버인 경우

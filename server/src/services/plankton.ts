@@ -9,7 +9,6 @@ import { type Area } from "@/classes/area";
 import { MapService } from "./map";
 import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
-import { error } from "console";
 
 @Service()
 export class PlanktonService {

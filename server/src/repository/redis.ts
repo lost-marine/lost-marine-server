@@ -1,5 +1,4 @@
 import { type Player } from "@/classes/player";
-import { error } from "console";
 import redis from "redis";
 
 const playerKey: string = "player:";
@@ -40,9 +39,8 @@ export async function existPlayer(playerId: number): Promise<boolean> {
     result = (await client.exists(playerKey + playerId)) === 1;
   } catch (error) {
     throw new Error("PLAYER_NO_EXIST_ERROR");
-  } finally {
-    return result;
   }
+  return result;
 }
 
 /**
@@ -137,7 +135,7 @@ export async function getPlayerList(): Promise<Player[]> {
 export async function updatePlayer(player: Player): Promise<boolean> {
   const result: boolean = false;
   try {
-    if (await existPlayer) {
+    if (await existPlayer(player.playerId)) {
       const playerJSON = JSON.stringify(player);
       await client.set(playerKey + player.playerId, playerJSON);
     }
@@ -159,7 +157,7 @@ export async function updatePlayer(player: Player): Promise<boolean> {
  */
 export async function deletePlayer(playerId: number): Promise<void> {
   try {
-    if (await existPlayer) {
+    if (await existPlayer(playerId)) {
       await client.del(playerKey + playerId);
     }
   } catch (error) {

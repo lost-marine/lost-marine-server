@@ -2,7 +2,7 @@ import "reflect-metadata";
 import Container, { Service } from "typedi";
 import { Player } from "@/classes/player";
 import {
-  PlayerCrashRequest,
+  type PlayerCrashRequest,
   type ValidateRespone,
   type PlayerResponse,
   type PlayerAttackResponse,
@@ -31,8 +31,6 @@ import {
   updateDefenderInfo,
   updatePlayerInfo
 } from "@/feat/player";
-import { error } from "console";
-import { request } from "http";
 
 @Service()
 export class PlayerService {
@@ -59,10 +57,8 @@ export class PlayerService {
     const myInfo: Player = createBuilder(Player)
       .setPlayerId(++this.count)
       .setNickname(nickname)
-      // .setCenterX(spawnArea.centerX)
-      // .setCenterY(spawnArea.centerY)
-      .setCenterX(100)
-      .setCenterY(200)
+      .setCenterX(spawnArea.centerX)
+      .setCenterY(spawnArea.centerY)
       .setSocketId(socketId)
       .setSpeciesId(player.speciesId)
       .setWidth(speciesInfo.width)
@@ -120,11 +116,11 @@ export class PlayerService {
     };
   }
 
-  playerEvolution(targetSpeciesId: number, player: Player): void {
+  async playerEvolution(targetSpeciesId: number, player: Player): Promise<void> {
     const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(targetSpeciesId), "CANNOT_FIND_TIER");
 
     evolvePlayer(player, targetSpecies);
-    updatePlayer(player);
+    await updatePlayer(player);
   }
 
   /**

@@ -1,5 +1,4 @@
 import { Creature } from "@/classes/creature";
-import { type Species } from "@/types";
 
 export class Player extends Creature {
   [x: string]: any;
