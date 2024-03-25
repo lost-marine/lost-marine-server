@@ -66,7 +66,7 @@ export class PlayerService {
       .setHeight(speciesInfo.height)
       .build();
     logger.info("플레이어 생성 : " + myInfo.playerId + ", " + myInfo.nickname);
-    // console.log(myInfo);
+
     return myInfo;
   }
 
@@ -156,7 +156,6 @@ export class PlayerService {
 
       return result;
     } catch (error) {
-      // console.error("플레이어 추가 실패:", error);
       logger.error("플레이어 추가 실패 : " + error);
       return null;
     }
@@ -259,7 +258,6 @@ export class PlayerService {
     };
 
     logger.info("플레이어 업데이트 : " + JSON.stringify(response));
-    // console.log(response);
     return response;
   }
 

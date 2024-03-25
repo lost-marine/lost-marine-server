@@ -47,7 +47,7 @@ export class MapService {
     g.playerList?.forEach((player) => {
       const existedArea: Area = player.playerToArea();
       if (validateCanCrushArea(existedArea, area)) {
-        console.info("해당 위치에 플레이어 스폰 불가. 스폰 위치를 스킵합니다.");
+        logger.info("해당 위치에 플레이어 스폰 불가. 스폰 위치를 스킵합니다.");
         flag = false;
       }
     });
