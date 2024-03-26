@@ -16,7 +16,8 @@ import {
   type ChatMessageReceiveRequest,
   type Species,
   type EvolveRequest,
-  type NicknameRequest
+  type NicknameRequest,
+  type PlayerAttackResponse
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -90,11 +91,11 @@ io.on("connection", (socket: Socket) => {
       isSuccess: true,
       msg: getSuccessMessage("NICKNAME_VALIDATE_SUCCESS")
     };
-    const result = await playerService.validateNickName(typeEnsure(nickname, "INVALID_INPUT"));
+    try {
+      const result = await playerService.validateNickName(typeEnsure(nickname, "INVALID_INPUT"));
 
-    validateResponse = result;
-
-    if (!validateResponse.isSuccess) {
+      validateResponse = result;
+    } catch (error) {
       validateResponse.isSuccess = false;
       validateResponse.msg = getErrorMessage(error);
     }
@@ -243,27 +244,14 @@ io.on("connection", (socket: Socket) => {
         if (validateResponse.isSuccess) {
           const result = await playerService.attackPlayer(data);
           if (result !== undefined && result.length === 2) {
-            // 플레이어 상태 정보 수정
-            for (const player of result) {
-              const mySocketId: string = player.socketId;
-              const { socketId, ...playerResponse } = player;
-              // 싱크 맞추는 부분에 대한 최적화 필요
-              sendToMe(mySocketId, "player-status-sync", playerResponse);
+            await attackPlaer(result);
+          }
 
-              // 게임 오버인 경우
-              if (player.isGameOver) {
-                logger.info("게임 오버 : " + player.playerId);
-                const gameOverResponse = await playerService.getGameOver(result);
-                sendToMe(mySocketId, "game-over", gameOverResponse);
-                sendWithoutMe(socket, "player-quit", player.playerId);
-                await playerService.deletePlayerByPlayerId(player.playerId);
-                // 공격 받은 사람은 삭제되고
-                await zREMPlayer(player.playerId);
-              } else {
-                await zADDPlayer(player.playerId, player.point);
-              }
-              sendToAll("ranking-receive", await getTenRanker());
-            }
+          // 반대의 경우
+          const reverseResult = await playerService.attackPlayer({ playerAId: data.playerBId, playerBId: data.playerAId });
+
+          if (reverseResult !== undefined && reverseResult.length === 2) {
+            await attackPlaer(reverseResult);
           }
         }
       } catch (error) {
@@ -357,5 +345,34 @@ const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
 };
 
 httpServer.listen(port, () => {});
+
+const attackPlaer = async (result: PlayerAttackResponse[]): Promise<void> => {
+  // 플레이어 상태 정보 수정
+  for (const player of result) {
+    const mySocketId: string = player.socketId;
+    const { socketId, ...playerResponse } = player;
+    // 싱크 맞추는 부분에 대한 최적화 필요
+    sendToMe(mySocketId, "player-status-sync", playerResponse);
+
+    // 게임 오버인 경우
+    if (player.isGameOver) {
+      console.log("game-over");
+      const gameOverResponse = await playerService.getGameOver(result);
+      sendToMe(mySocketId, "game-over", gameOverResponse.playerGameOver);
+      sendToAll("player-quit", player.playerId);
+
+      // 공격자의 포인트 정보 갱신
+      const playerAttackResponse: PlayerAttackResponse = gameOverResponse.playerAttackResponse;
+      const { socketId, ...attackerResponse } = playerAttackResponse;
+      sendToMe(playerAttackResponse.socketId, "player-status-sync", attackerResponse);
+      await playerService.deletePlayerByPlayerId(player.playerId);
+      // 공격 받은 사람은 삭제되고
+      await zREMPlayer(player.playerId);
+    } else {
+      await zADDPlayer(player.playerId, player.point);
+    }
+    sendToAll("ranking-receive", await getTenRanker());
+  }
+};
 
 export const viteNodeApp = app;
