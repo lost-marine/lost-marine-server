@@ -74,10 +74,11 @@ export function toPlayerAttackResponse(player: Player): PlayerAttackResponse {
  * @export
  * @param {Player} player
  */
-export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: Player): void {
+export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: Player): Player {
   attackPlayer.playerCount++;
-  attackPlayer.point += gameoverPlayer.point * 0.5;
+  attackPlayer.point += 10 + gameoverPlayer.point * 0.5;
   attackPlayer.microplasticCount += gameoverPlayer.microplasticCount;
+  return attackPlayer;
 }
 
 export function evolvePlayer(player: Player, targetSpecies: Species): void {

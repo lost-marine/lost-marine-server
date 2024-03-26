@@ -22,7 +22,7 @@ export type PlayerCrashRequest = {
 
 export type PlayerAttack = Pick<Player, "playerId" | "health" | "point" | "centerX" | "centerY" | "isGameOver">;
 export type PlayerAttackResponse = PlayerAttack & { socketId: string };
-export type playerGameOverResponse = Pick<Player, "playerId" | "planktonCount" | "microplasticCount" | "playerCount" | "point"> &
+export type PlayerGameOver = Pick<Player, "playerId" | "planktonCount" | "microplasticCount" | "playerCount" | "point"> &
   GameOverData;
 
 export type GameOverData = {
