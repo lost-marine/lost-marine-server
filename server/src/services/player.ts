@@ -21,7 +21,7 @@ import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
-import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/redis";
+import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer, zREMPlayer } from "@/repository/redis";
 import {
   evolvePlayer,
   playerToArea,
@@ -289,6 +289,7 @@ export class PlayerService {
   async deletePlayerByPlayerId(playerId: number): Promise<void> {
     try {
       await deletePlayer(playerId);
+      await zREMPlayer(playerId);
     } catch (error) {
       throw new Error("PLAYER_NOT_FOUND");
     }
