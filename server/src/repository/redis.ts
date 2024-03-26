@@ -191,8 +191,8 @@ export async function zADDPlayer(playerId: number, point: number): Promise<void>
       }
     ]);
   } catch (error) {
-    console.log(error);
-    console.error("Cannot add sorted set!");
+    logger.error(error);
+    logger.error("Cannot add Sorted Set");
   }
 }
 
@@ -210,7 +210,7 @@ export async function zREMPlayer(playerId: number): Promise<void> {
   try {
     await client.ZREM("lank", playerId.toString());
   } catch (error) {
-    console.error("Cannot remove sorted set : " + playerId);
+    logger.error("Cannot remove sorted set : " + playerId);
   }
 }
 
@@ -239,8 +239,8 @@ export async function getTenRanker(): Promise<lankInfo[]> {
       lankdata.push(info);
     }
   } catch (error) {
-    console.log(error);
-    console.error("Cannot get zRange");
+    logger.error(error);
+    logger.error("Cannot get zRange");
   }
   return lankdata;
 }

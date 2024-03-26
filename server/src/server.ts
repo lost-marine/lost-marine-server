@@ -115,7 +115,6 @@ io.on("connection", (socket: Socket) => {
       if (gameStartReq !== null) {
         const planktonList: Plankton[] = Array.from(g.planktonList.values());
         logger.info("소켓 연결 성공 : " + JSON.stringify(addResult));
-        console.log(gameStartReq.myInfo);
         await zADDPlayer(typeEnsure(addResult?.myInfo.playerId), 0);
         sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
         sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
