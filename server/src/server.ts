@@ -26,7 +26,7 @@ import { getErrorMessage, getSuccessMessage } from "./message/message-handler";
 import { typeEnsure, recordEnsure } from "@/util/assert";
 import g from "@/types/global";
 import { error } from "console";
-import { getPlayer, setPlayer } from "./repository/redis";
+import { getPlayer, setPlayer, zADDPlayer, zREMPlayer, getTenRanker } from "./repository/redis";
 import { logger } from "@/util/winston";
 
 const dirname = path.resolve();
@@ -77,10 +77,9 @@ app.get("/", (req: Request, res: Response) => {
 Container.set("width", 2688);
 Container.set("height", 1536);
 Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 8));
+const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
 io.on("connection", (socket: Socket) => {
-  const planktonManager = Container.get<PlanktonService>(PlanktonService);
-
   if (playerService.count === 0) {
     planktonManager.initPlankton();
   }
@@ -115,10 +114,12 @@ io.on("connection", (socket: Socket) => {
       const gameStartReq: PlayerResponse | null = addResult;
       if (gameStartReq !== null) {
         const planktonList: Plankton[] = Array.from(g.planktonList.values());
-
         logger.info("소켓 연결 성공 : " + JSON.stringify(addResult));
+        console.log(gameStartReq.myInfo);
+        await zADDPlayer(typeEnsure(addResult?.myInfo.playerId), 0);
         sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
         sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+        sendToAll("ranking-receive", await getTenRanker());
       }
     } else {
       validResponse.isSuccess = false;
@@ -139,9 +140,9 @@ io.on("connection", (socket: Socket) => {
       validateResponse = playerService.validateEvolution(data.speciesId, beforeEvolvePlayer);
       if (validateResponse.isSuccess) {
         await playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
-        const { socketId, ...playerResponse } = beforeEvolvePlayer;
         await setPlayer(data.playerId, beforeEvolvePlayer);
-        sendToMe(beforeEvolvePlayer.socketId, "player-status-sync", playerResponse);
+        sendToAll("ranking-receive", await getTenRanker());
+        sendWithoutMe(socket, "others-evolution-sync", { playerId: data.playerId, speciesId: data.speciesId });
       }
     } catch (error: unknown) {
       validateResponse.isSuccess = false;
@@ -171,6 +172,8 @@ io.on("connection", (socket: Socket) => {
   socket.on("player-quit", async (playerId: number) => {
     try {
       await playerService.deletePlayerByPlayerId(typeEnsure(playerId));
+      await zREMPlayer(playerId);
+      sendToAll("ranking-receive", await getTenRanker());
       sendWithoutMe(socket, "player-quit", playerId);
     } catch (error) {
       // 플레이어 삭제에 실패하면 에러 메세지
@@ -198,6 +201,11 @@ io.on("connection", (socket: Socket) => {
     try {
       recordEnsure(data, "INVALID_INPUT");
       result = await planktonManager.eatedPlankton(data.planktonId, data.playerId);
+      if (result.isSuccess) {
+        const playerPoint: number = typeEnsure(await getPlayer(data.playerId)).point;
+        await zADDPlayer(data.playerId, playerPoint);
+        sendToAll("ranking-receive", await getTenRanker());
+      }
     } catch (error: unknown) {
       result.isSuccess = false;
       result.msg = getErrorMessage(error);
@@ -250,7 +258,12 @@ io.on("connection", (socket: Socket) => {
                 sendToMe(mySocketId, "game-over", gameOverResponse);
                 sendWithoutMe(socket, "player-quit", player.playerId);
                 await playerService.deletePlayerByPlayerId(player.playerId);
+                // 공격 받은 사람은 삭제되고
+                await zREMPlayer(player.playerId);
+              } else {
+                await zADDPlayer(player.playerId, player.point);
               }
+              sendToAll("ranking-receive", await getTenRanker());
             }
           }
         }

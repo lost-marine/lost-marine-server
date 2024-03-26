@@ -1,4 +1,7 @@
 import { type Player } from "@/classes/player";
+import { SPECIES_ASSET } from "@/constants/asset";
+import { type lankInfo } from "@/types";
+import { typeEnsure } from "@/util/assert";
 import redis from "redis";
 import dotenv from "dotenv";
 import { logger } from "@/util/winston";
@@ -166,4 +169,78 @@ export async function deletePlayer(playerId: number): Promise<void> {
   } catch (error) {
     logger.error("플레이어 삭제 실패 : " + error);
   }
+}
+
+/**
+ * redis sorted set에 update/create
+ * @date 3/25/2024 - 1:46:32 PM
+ * @author 박연서
+ *
+ * @export
+ * @async
+ * @param {number} playerId
+ * @param {number} point
+ * @returns {Promise<void>}
+ */
+export async function zADDPlayer(playerId: number, point: number): Promise<void> {
+  try {
+    await client.ZADD("lank", [
+      {
+        score: point,
+        value: playerId.toString()
+      }
+    ]);
+  } catch (error) {
+    console.log(error);
+    console.error("Cannot add sorted set!");
+  }
+}
+
+/**
+ * redis sorted set에 해당 플레이어 delete
+ * @date 3/25/2024 - 1:46:48 PM
+ * @author 박연서
+ *
+ * @export
+ * @async
+ * @param {number} playerId
+ * @returns {Promise<void>}
+ */
+export async function zREMPlayer(playerId: number): Promise<void> {
+  try {
+    await client.ZREM("lank", playerId.toString());
+  } catch (error) {
+    console.error("Cannot remove sorted set : " + playerId);
+  }
+}
+
+/**
+ * 상위 10명까지의 정보를 가져와서 가공합니다.
+ * @date 3/25/2024 - 11:50:01 AM
+ * @author 박연서
+ *
+ * @export
+ * @async
+ * @returns {Promise<lankInfo[]>}
+ */
+export async function getTenRanker(): Promise<lankInfo[]> {
+  let data: Array<{ score: number; value: string }> = [];
+  const lankdata: lankInfo[] = [];
+  try {
+    data = await client.zRangeWithScores("lank", 0, 10, { REV: true });
+    for (const item of data) {
+      const thisPlayer: Player = typeEnsure(await getPlayer(Number(item.value)));
+      const info: lankInfo = {
+        playerId: thisPlayer.playerId,
+        nickname: thisPlayer.nickname,
+        speciesname: typeEnsure(SPECIES_ASSET.get(thisPlayer.speciesId)).name,
+        point: thisPlayer.point
+      };
+      lankdata.push(info);
+    }
+  } catch (error) {
+    console.log(error);
+    console.error("Cannot get zRange");
+  }
+  return lankdata;
 }
