@@ -1,6 +1,6 @@
 import { type Player } from "@/classes/player";
 import { SPECIES_ASSET } from "@/constants/asset";
-import { type lankInfo } from "@/types";
+import { type RankInfo } from "@/types";
 import { typeEnsure } from "@/util/assert";
 import redis from "redis";
 import dotenv from "dotenv";
@@ -184,7 +184,7 @@ export async function deletePlayer(playerId: number): Promise<void> {
  */
 export async function zADDPlayer(playerId: number, point: number): Promise<void> {
   try {
-    await client.ZADD("lank", [
+    await client.ZADD("rank", [
       {
         score: point,
         value: playerId.toString()
@@ -208,7 +208,7 @@ export async function zADDPlayer(playerId: number, point: number): Promise<void>
  */
 export async function zREMPlayer(playerId: number): Promise<void> {
   try {
-    await client.ZREM("lank", playerId.toString());
+    await client.ZREM("rank", playerId.toString());
   } catch (error) {
     logger.error("Cannot remove sorted set : " + playerId);
   }
@@ -221,26 +221,26 @@ export async function zREMPlayer(playerId: number): Promise<void> {
  *
  * @export
  * @async
- * @returns {Promise<lankInfo[]>}
+ * @returns {Promise<RankInfo[]>}
  */
-export async function getTenRanker(): Promise<lankInfo[]> {
+export async function getTenRanker(): Promise<RankInfo[]> {
   let data: Array<{ score: number; value: string }> = [];
-  const lankdata: lankInfo[] = [];
+  const rankdata: RankInfo[] = [];
   try {
-    data = await client.zRangeWithScores("lank", 0, 10, { REV: true });
+    data = await client.zRangeWithScores("rank", 0, 10, { REV: true });
     for (const item of data) {
       const thisPlayer: Player = typeEnsure(await getPlayer(Number(item.value)));
-      const info: lankInfo = {
+      const info: RankInfo = {
         playerId: thisPlayer.playerId,
         nickname: thisPlayer.nickname,
         speciesname: typeEnsure(SPECIES_ASSET.get(thisPlayer.speciesId)).name,
         point: thisPlayer.point
       };
-      lankdata.push(info);
+      rankdata.push(info);
     }
   } catch (error) {
     logger.error(error);
     logger.error("Cannot get zRange");
   }
-  return lankdata;
+  return rankdata;
 }

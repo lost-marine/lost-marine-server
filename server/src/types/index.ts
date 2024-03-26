@@ -76,19 +76,9 @@ export type EvolveRequest = {
   point: number;
 };
 
-export type lankInfo = {
+export type RankInfo = {
   playerId: number;
   nickname: string;
   speciesname: string;
   point: number;
-};
-
-export type evolutionPlayerRes = {
-  playerId: number;
-  health: number;
-  point: number;
-  centerX: number;
-  centerY: number;
-  isGameOver: boolean;
-  speciesId: number;
 };
