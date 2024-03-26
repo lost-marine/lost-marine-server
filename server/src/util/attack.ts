@@ -12,7 +12,6 @@ const { Bodies, Bounds } = matter;
  * @returns {boolean}
  */
 export function isAttacking(areaA: Area, areaB: Area): boolean {
-  // A의 입의 위치로 mouthArea를 원으로 만들어서 검증
   let centerX = areaA.centerX;
   let centerY = areaA.centerY;
   const direction = areaA.direction;
@@ -50,11 +49,13 @@ export function isAttacking(areaA: Area, areaB: Area): boolean {
       break;
   }
 
-  const playerAMouth = Bodies.circle(centerX, centerY, 5).bounds;
+  const playerAArea = Bodies.rectangle(centerX, centerY, 10, 10, {
+    angle: (areaA.direction * 45 * Math.PI) / 180
+  }).bounds;
 
-  const playerBArea = Bodies.rectangle(areaB.centerX, areaB.centerY, areaB.width, areaB.height, {
+  const playerBArea = Bodies.rectangle(areaB.centerX, areaB.centerY, areaB.height, areaB.width, {
     angle: (areaB.direction * 45 * Math.PI) / 180
   }).bounds;
 
-  return Bounds.overlaps(playerAMouth, playerBArea);
+  return Bounds.overlaps(playerAArea, playerBArea);
 }

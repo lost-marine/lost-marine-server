@@ -8,7 +8,7 @@ import {
   type PlayerAttackResponse,
   type Species,
   type NicknameRequest,
-  type playerGameOverResponse
+  type PlayerGameOver
 } from "@/types";
 import { MapService } from "./map";
 // import { type Position } from "@/classes/position";
@@ -26,13 +26,12 @@ import {
   evolvePlayer,
   playerToArea,
   toPlayerAttackResponse,
-  updateAttackerInfo,
   updateAttackerPlayerCount,
   updateDefenderInfo,
   updatePlayerInfo
 } from "@/feat/player";
 import { logger } from "@/util/winston";
-
+// import _ from "lodash";
 @Service()
 export class PlayerService {
   count: number;
@@ -81,7 +80,6 @@ export class PlayerService {
     const nickname: string = request.nickname;
     const regexp: RegExp = /^[ㄱ-ㅎㅏ-ㅣ가-힣A-Za-z0-9]{2,12}$/;
     let isSuccess: boolean = regexp.test(nickname);
-    let msg: string = "닉네임 검증 결과 " + (isSuccess ? "성공" : "실패") + "입니다.";
 
     // 닉네임 중복 검사
     if (isSuccess) {
@@ -89,11 +87,11 @@ export class PlayerService {
       playerMap.forEach((player) => {
         if (player.nickname === nickname) {
           isSuccess = false;
-          msg = "중복된 아이디입니다.";
+          throw new Error("DUPLICATE_ERROR");
         }
       });
     }
-    return { isSuccess, msg };
+    return { isSuccess, msg: "" };
   }
 
   /**
@@ -196,7 +194,7 @@ export class PlayerService {
   async isCrashValidate(request: PlayerCrashRequest): Promise<void> {
     // 플레이어 두 명이 충돌 가능 영역에 있는지 검증
     const firstPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
-    const secondPlayer: Player = typeEnsure(await getPlayer(request.playerAId), "ATTACK_PLAYER_NO_EXIST_ERROR");
+    const secondPlayer: Player = typeEnsure(await getPlayer(request.playerBId), "ATTACK_PLAYER_NO_EXIST_ERROR");
 
     if (!validateCanCrushArea(playerToArea(firstPlayer), playerToArea(secondPlayer))) {
       throw new Error("ATTACK_PLAYER_NO_COLLISION_AREA");
@@ -219,7 +217,6 @@ export class PlayerService {
     const areaB: Area = playerToArea(playerB);
 
     if (isAttacking(areaA, areaB)) {
-      updateAttackerInfo(playerA);
       updateDefenderInfo(playerB, playerA);
 
       await updatePlayer(playerA);
@@ -237,7 +234,9 @@ export class PlayerService {
    * @param {PlayerAttackResponse} player
    * @returns {plyaerGameOverResponse}
    */
-  async getGameOver(playerList: PlayerAttackResponse[]): Promise<playerGameOverResponse> {
+  async getGameOver(
+    playerList: PlayerAttackResponse[]
+  ): Promise<{ playerGameOver: PlayerGameOver; playerAttackResponse: PlayerAttackResponse }> {
     const attackPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
     const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
 
@@ -245,16 +244,19 @@ export class PlayerService {
 
     await updatePlayer(attackPlayer);
 
-    const response: playerGameOverResponse = {
-      playerId: gameoverPlayer.playerId,
-      playerNickname: gameoverPlayer.nickname,
-      attackerNickname: attackPlayer.nickname,
-      attackerSpeciesId: attackPlayer.speciesId,
-      message: "당신은 " + attackPlayer.nickname + "에게 먹혔습니다",
-      planktonCount: gameoverPlayer.planktonCount,
-      microplasticCount: gameoverPlayer.microplasticCount,
-      playerCount: gameoverPlayer.playerCount,
-      point: gameoverPlayer.point
+    const response = {
+      playerGameOver: {
+        playerId: gameoverPlayer.playerId,
+        playerNickname: gameoverPlayer.nickname,
+        attackerNickname: attackPlayer.nickname,
+        attackerSpeciesId: attackPlayer.speciesId,
+        message: "당신은 " + attackPlayer.nickname + "에게 먹혔습니다",
+        planktonCount: gameoverPlayer.planktonCount,
+        microplasticCount: gameoverPlayer.microplasticCount,
+        playerCount: gameoverPlayer.playerCount,
+        point: gameoverPlayer.point
+      },
+      playerAttackResponse: toPlayerAttackResponse(attackPlayer)
     };
 
     logger.info("플레이어 업데이트 : " + JSON.stringify(response));

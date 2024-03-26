@@ -35,16 +35,6 @@ export function playerToArea(player: Player): Area {
 }
 
 /**
- * 공격한 플레이어 정보 갱신
- * TODO: 획득 포인드 수정 필요
- * @date 3/8/2024 - 11:19:35 AM
- * @author 양소영
- */
-export function updateAttackerInfo(player: Player): void {
-  player.point++;
-}
-
-/**
  * 공격당한 플레이어 정보 갱신
  * @date 3/8/2024 - 11:19:59 AM
  * @author 양소영
@@ -84,10 +74,11 @@ export function toPlayerAttackResponse(player: Player): PlayerAttackResponse {
  * @export
  * @param {Player} player
  */
-export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: Player): void {
+export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: Player): Player {
   attackPlayer.playerCount++;
-  attackPlayer.point += gameoverPlayer.point * 0.5;
+  attackPlayer.point += 10 + gameoverPlayer.point * 0.5;
   attackPlayer.microplasticCount += gameoverPlayer.microplasticCount;
+  return attackPlayer;
 }
 
 export function evolvePlayer(player: Player, targetSpecies: Species): void {
