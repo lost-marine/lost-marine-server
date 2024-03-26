@@ -244,14 +244,14 @@ io.on("connection", (socket: Socket) => {
         if (validateResponse.isSuccess) {
           const result = await playerService.attackPlayer(data);
           if (result !== undefined && result.length === 2) {
-            await attackPlaer(result);
+            await attackPlayer(result);
           }
 
           // 반대의 경우
           const reverseResult = await playerService.attackPlayer({ playerAId: data.playerBId, playerBId: data.playerAId });
 
           if (reverseResult !== undefined && reverseResult.length === 2) {
-            await attackPlaer(reverseResult);
+            await attackPlayer(reverseResult);
           }
         }
       } catch (error) {
@@ -346,7 +346,7 @@ const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
 
 httpServer.listen(port, () => {});
 
-const attackPlaer = async (result: PlayerAttackResponse[]): Promise<void> => {
+const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
   // 플레이어 상태 정보 수정
   for (const player of result) {
     const mySocketId: string = player.socketId;
@@ -356,7 +356,6 @@ const attackPlaer = async (result: PlayerAttackResponse[]): Promise<void> => {
 
     // 게임 오버인 경우
     if (player.isGameOver) {
-      console.log("game-over");
       const gameOverResponse = await playerService.getGameOver(result);
       sendToMe(mySocketId, "game-over", gameOverResponse.playerGameOver);
       sendToAll("player-quit", player.playerId);
