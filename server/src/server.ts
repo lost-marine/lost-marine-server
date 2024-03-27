@@ -365,7 +365,6 @@ const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
       const { socketId, ...attackerResponse } = playerAttackResponse;
       sendToMe(playerAttackResponse.socketId, "player-status-sync", attackerResponse);
       await playerService.deletePlayerByPlayerId(player.playerId);
-      // 공격 받은 사람은 삭제되고
     }
     sendToAll("ranking-receive", await getTenRanker());
   }
