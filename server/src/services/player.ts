@@ -18,7 +18,7 @@ import { createBuilder } from "@/util/builder";
 import { validateCanCrushArea } from "@/util/crushValid";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
-import { SPECIES_ASSET } from "@/constants/asset";
+import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
 import {
@@ -127,8 +127,8 @@ export class PlayerService {
 
   async playerEvolution(targetSpeciesId: number, player: Player): Promise<void> {
     const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(targetSpeciesId), "CANNOT_FIND_TIER");
-
-    evolvePlayer(player, targetSpecies);
+    const useExp: number = typeEnsure(TIER_ASSET.get(targetSpecies.tierCode));
+    evolvePlayer(player, targetSpecies, useExp);
     await updatePlayer(player);
   }
 

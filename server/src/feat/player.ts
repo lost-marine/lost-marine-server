@@ -92,9 +92,9 @@ export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: 
  * @param {Player} player
  * @param {Species} targetSpecies
  */
-export function evolvePlayer(player: Player, targetSpecies: Species): void {
+export function evolvePlayer(player: Player, targetSpecies: Species, usedExp: number): void {
   player.speciesId = targetSpecies.speciesId;
-  player.nowExp = 0;
+  player.nowExp -= usedExp;
   player.power = targetSpecies.power;
   player.width = targetSpecies.width;
   player.height = targetSpecies.height;
