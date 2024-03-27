@@ -11,6 +11,7 @@ import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
 import { logger } from "@/util/winston";
 import { generatePlanktonSpawnProbability } from "@/util/random";
+import { convertTPlayerStatusInfo } from "@/feat/player";
 
 @Service()
 export class PlanktonService {
@@ -91,7 +92,9 @@ export class PlanktonService {
         const player = await playerService.eatPlankton(playerId, planktonInfo.isPlankton);
         const result: PlanktonEatResponse = {
           isSuccess: true,
-          player,
+          planktonCount: player.planktonCount,
+          microplasticCount: player.microplasticCount,
+          playerStatusInfo: convertTPlayerStatusInfo(player),
           msg: "섭취에 성공했습니다."
         };
         return result;
