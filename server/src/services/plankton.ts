@@ -11,15 +11,10 @@ import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
 import { logger } from "@/util/winston";
 import { generatePlanktonSpawnProbability } from "@/util/random";
+import { convertTPlayerStatusInfo } from "@/feat/player";
 
 @Service()
 export class PlanktonService {
-  @Inject("width")
-  width: number;
-
-  @Inject("height")
-  height: number;
-
   @Inject("planktonCnt")
   planktonCnt: number;
 
@@ -91,7 +86,9 @@ export class PlanktonService {
         const player = await playerService.eatPlankton(playerId, planktonInfo.isPlankton);
         const result: PlanktonEatResponse = {
           isSuccess: true,
-          player,
+          planktonCount: player.planktonCount,
+          microplasticCount: player.microplasticCount,
+          playerStatusInfo: convertTPlayerStatusInfo(player),
           msg: "섭취에 성공했습니다."
         };
         return result;
@@ -100,7 +97,7 @@ export class PlanktonService {
       }
     }
 
-    return { isSuccess: false, msg: "섭취에 실패했습니다." };
+    return { isSuccess: false, planktonCount: 0, microplasticCount: 0, msg: "섭취에 실패했습니다." };
   }
 
   /**

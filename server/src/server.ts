@@ -76,8 +76,6 @@ app.get("/", (req: Request, res: Response) => {
 //   });
 // }, 300);
 
-Container.set("width", 2688);
-Container.set("height", 1536);
 Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 8));
 const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
@@ -197,6 +195,8 @@ io.on("connection", (socket: Socket) => {
   socket.on("plankton-eat", async (data: { playerId: number; planktonId: number }, callback) => {
     let result: PlanktonEatResponse = {
       isSuccess: true,
+      planktonCount: 0,
+      microplasticCount: 0,
       msg: getSuccessMessage("EAT_PLANKTON_SUCCESS")
     };
     try {
@@ -210,6 +210,7 @@ io.on("connection", (socket: Socket) => {
     } catch (error: unknown) {
       result.isSuccess = false;
       result.msg = getErrorMessage(error);
+      logger.error("플랑크톤 섭취 실패!!!");
     } finally {
       callback(result);
       if (result.isSuccess) {

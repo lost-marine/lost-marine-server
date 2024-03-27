@@ -1,6 +1,6 @@
 import { Area } from "@/classes/area";
 import { type Player } from "@/classes/player";
-import { type Species, type PlayerAttackResponse } from "@/types";
+import { type Species, type PlayerAttackResponse, type PlayerStatusInfo } from "@/types";
 import { createBuilder } from "@/util/builder";
 
 /**
@@ -83,11 +83,40 @@ export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: 
   return attackPlayer;
 }
 
-export function evolvePlayer(player: Player, targetSpecies: Species): void {
+/**
+ * 플레이어가 진화합니다.
+ * @date 3/27/2024 - 2:50:24 PM
+ * @author 박연서
+ *
+ * @export
+ * @param {Player} player
+ * @param {Species} targetSpecies
+ */
+export function evolvePlayer(player: Player, targetSpecies: Species, usedExp: number): void {
   player.speciesId = targetSpecies.speciesId;
-  player.nowExp = 0;
+  player.nowExp -= usedExp;
   player.power = targetSpecies.power;
   player.width = targetSpecies.width;
   player.height = targetSpecies.height;
   player.health = targetSpecies.health;
+}
+
+/**
+ * 플레이어 정보에서 필요한 부분만을 가공합니다.
+ * @date 3/27/2024 - 2:55:52 PM
+ * @author 박연서
+ *
+ * @export
+ * @param {Player} player
+ * @returns {PlayerStatusInfo}
+ */
+export function convertTPlayerStatusInfo(player: Player): PlayerStatusInfo {
+  return {
+    playerId: player.playerId,
+    health: player.health,
+    nowExp: player.nowExp,
+    centerX: player.centerX,
+    centerY: player.centerY,
+    isGameOver: false
+  };
 }
