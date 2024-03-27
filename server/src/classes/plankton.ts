@@ -8,6 +8,7 @@ export class Plankton extends Creature {
   power: number = 0;
   status: number = 0;
   planktonId: number = 0;
+  isPlankton: boolean = true;
 
   /**
    * Description placeholder
