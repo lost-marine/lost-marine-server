@@ -271,12 +271,16 @@ export class PlayerService {
    * @param {number} playerId
    * @param {number} planktonId
    */
-  async eatPlankton(playerId: number): Promise<Player> {
+  async eatPlankton(playerId: number, isPlankton: boolean): Promise<Player> {
     const player: Player = typeEnsure(await getPlayer(playerId), "CANNOT_FIND_PLAYER");
 
     if (player !== undefined) {
-      player.planktonCount++;
-      player.point++;
+      if (isPlankton) {
+        player.planktonCount++;
+        player.point++;
+      } else {
+        player.microplasticCount++;
+      }
       await updatePlayer(player);
     }
     return player;
