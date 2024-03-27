@@ -244,6 +244,7 @@ io.on("connection", (socket: Socket) => {
 
         if (validateResponse.isSuccess) {
           const result = await playerService.attackPlayer(data);
+
           if (result !== undefined && result.length === 2) {
             await attackPlayer(result);
           }

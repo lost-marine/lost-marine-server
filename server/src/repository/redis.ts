@@ -20,6 +20,7 @@ client.on("error", (err: any) => {
 
 async function initializeClient(): Promise<void> {
   await client.connect();
+  await client.flushAll();
   logger.info("Redis connected!");
 }
 
