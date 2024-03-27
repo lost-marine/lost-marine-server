@@ -77,8 +77,8 @@ export function toPlayerAttackResponse(player: Player): PlayerAttackResponse {
  */
 export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: Player): Player {
   attackPlayer.playerCount++;
-  attackPlayer.totalExp += 10 + gameoverPlayer.totalExp * 0.5;
-  attackPlayer.nowExp += 10 + gameoverPlayer.totalExp * 0.5;
+  attackPlayer.totalExp += 10 + Math.round(gameoverPlayer.totalExp * 0.5);
+  attackPlayer.nowExp += 10 + Math.round(gameoverPlayer.totalExp * 0.5);
   attackPlayer.microplasticCount += gameoverPlayer.microplasticCount;
   return attackPlayer;
 }

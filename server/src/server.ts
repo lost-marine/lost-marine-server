@@ -29,6 +29,7 @@ import g from "@/types/global";
 import { error } from "console";
 import { getPlayer, setPlayer, zADDPlayer, zREMPlayer, getTenRanker } from "./repository/redis";
 import { logger } from "@/util/winston";
+import _ from "lodash";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
@@ -152,15 +153,15 @@ io.on("connection", (socket: Socket) => {
     }
   });
 
-  // game start
-
+  // throttle 처리
+  const throttlePositionSync = _.throttle(sendWithoutMe, 30);
   // 플레이어 본인 위치 전송
   socket.on("my-position-sync", async (data: Player) => {
     try {
       const result = await playerService.updatePlayerInfo(data);
 
       // 다른 플레이어에게 변경사항 알려줌
-      sendWithoutMe(socket, "others-position-sync", result);
+      throttlePositionSync(socket, "others-position-sync", result);
     } catch (error) {
       // 플레이어가 존재하지 않는 경우 퇴장 요청 날림
       sendToAll("player-quit", data.playerId);
