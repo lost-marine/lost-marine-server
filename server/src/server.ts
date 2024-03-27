@@ -203,8 +203,8 @@ io.on("connection", (socket: Socket) => {
       recordEnsure(data, "INVALID_INPUT");
       result = await planktonManager.eatedPlankton(data.planktonId, data.playerId);
       if (result.isSuccess) {
-        const playerPoint: number = typeEnsure(await getPlayer(data.playerId)).point;
-        await zADDPlayer(data.playerId, playerPoint);
+        const player: Player = typeEnsure(await getPlayer(data.playerId));
+        await zADDPlayer(data.playerId, player.totalExp);
         sendToAll("ranking-receive", await getTenRanker());
       }
     } catch (error: unknown) {
@@ -369,7 +369,7 @@ const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
       // 공격 받은 사람은 삭제되고
       await zREMPlayer(player.playerId);
     } else {
-      await zADDPlayer(player.playerId, player.point);
+      await zADDPlayer(player.playerId, player.totalExp);
     }
     sendToAll("ranking-receive", await getTenRanker());
   }
