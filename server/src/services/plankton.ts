@@ -15,12 +15,6 @@ import { convertTPlayerStatusInfo } from "@/feat/player";
 
 @Service()
 export class PlanktonService {
-  @Inject("width")
-  width: number;
-
-  @Inject("height")
-  height: number;
-
   @Inject("planktonCnt")
   planktonCnt: number;
 
@@ -103,7 +97,7 @@ export class PlanktonService {
       }
     }
 
-    return { isSuccess: false, msg: "섭취에 실패했습니다." };
+    return { isSuccess: false, planktonCount: 0, microplasticCount: 0, msg: "섭취에 실패했습니다." };
   }
 
   /**

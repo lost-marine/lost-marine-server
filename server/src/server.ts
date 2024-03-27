@@ -76,8 +76,6 @@ app.get("/", (req: Request, res: Response) => {
 //   });
 // }, 300);
 
-Container.set("width", 2688);
-Container.set("height", 1536);
 Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 8));
 const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
