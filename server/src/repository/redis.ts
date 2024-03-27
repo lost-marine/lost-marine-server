@@ -179,14 +179,14 @@ export async function deletePlayer(playerId: number): Promise<void> {
  * @export
  * @async
  * @param {number} playerId
- * @param {number} point
+ * @param {number} totalExp
  * @returns {Promise<void>}
  */
-export async function zADDPlayer(playerId: number, point: number): Promise<void> {
+export async function zADDPlayer(playerId: number, totalExp: number): Promise<void> {
   try {
     await client.ZADD("rank", [
       {
-        score: point,
+        score: totalExp,
         value: playerId.toString()
       }
     ]);
@@ -234,7 +234,7 @@ export async function getTenRanker(): Promise<RankInfo[]> {
         playerId: thisPlayer.playerId,
         nickname: thisPlayer.nickname,
         speciesname: typeEnsure(SPECIES_ASSET.get(thisPlayer.speciesId)).name,
-        point: thisPlayer.point
+        totalExp: thisPlayer.totalExp
       };
       rankdata.push(info);
     }

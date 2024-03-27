@@ -14,7 +14,8 @@ export class Player extends Creature {
   playerCount: number = 0;
   stopTime: number = 0;
   level: number = 0;
-  point: number = 0;
+  totalExp: number = 0;
+  nowExp: number = 0;
   socketId: string = "";
   isFlipX: boolean = false;
   isGameOver: boolean = false;
