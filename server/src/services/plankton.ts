@@ -9,6 +9,8 @@ import { type Area } from "@/classes/area";
 import { MapService } from "./map";
 import g from "@/types/global";
 import { typeEnsure } from "@/util/assert";
+import { logger } from "@/util/winston";
+import { generatePlanktonSpawnProbability } from "@/util/random";
 
 @Service()
 export class PlanktonService {
@@ -54,10 +56,12 @@ export class PlanktonService {
 
     for (let i = 0; i < this.planktonCnt; i++) {
       const spawnArea: Area = mapService.getSpawnableArea(1);
+      const isPlankton: boolean = generatePlanktonSpawnProbability();
       const plankton: Plankton = createBuilder(Plankton)
         .setCenterX(spawnArea.centerX)
         .setCenterY(spawnArea.centerY)
         .setPlanktonId(this.idCounter)
+        .setIsPlankton(isPlankton)
         .build();
 
       g.planktonList?.set(this.idCounter, plankton);
@@ -84,7 +88,7 @@ export class PlanktonService {
 
       const playerService = Container.get<PlayerService>(PlayerService);
       try {
-        const player = await playerService.eatPlankton(playerId);
+        const player = await playerService.eatPlankton(playerId, planktonInfo.isPlankton);
         const result: PlanktonEatResponse = {
           isSuccess: true,
           player,
@@ -92,7 +96,7 @@ export class PlanktonService {
         };
         return result;
       } catch (error) {
-        console.error(error);
+        logger.error("플랑크톤 섭취 에러 : " + error);
       }
     }
 
@@ -112,10 +116,12 @@ export class PlanktonService {
 
     for (let i = this.eatedPlanktonCnt; i > 0; i--) {
       const spawnArea: Area = mapService.getSpawnableArea(1);
+      const isPlankton: boolean = generatePlanktonSpawnProbability();
       const plankton: Plankton = createBuilder(Plankton)
         .setCenterX(spawnArea.centerX)
         .setCenterY(spawnArea.centerY)
         .setPlanktonId(this.idCounter)
+        .setIsPlankton(isPlankton)
         .build();
 
       g.planktonList?.set(this.idCounter, plankton);

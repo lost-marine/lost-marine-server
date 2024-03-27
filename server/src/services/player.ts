@@ -21,7 +21,7 @@ import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
-import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer } from "@/repository/redis";
+import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer, zREMPlayer } from "@/repository/redis";
 import {
   evolvePlayer,
   playerToArea,
@@ -30,7 +30,8 @@ import {
   updateDefenderInfo,
   updatePlayerInfo
 } from "@/feat/player";
-
+import { logger } from "@/util/winston";
+// import _ from "lodash";
 @Service()
 export class PlayerService {
   count: number;
@@ -63,7 +64,8 @@ export class PlayerService {
       .setWidth(speciesInfo.width)
       .setHeight(speciesInfo.height)
       .build();
-    console.log(myInfo);
+    logger.info("플레이어 생성 : " + myInfo.playerId + ", " + myInfo.nickname);
+
     return myInfo;
   }
 
@@ -152,7 +154,7 @@ export class PlayerService {
 
       return result;
     } catch (error) {
-      console.error("플레이어 추가 실패:", error);
+      logger.error("플레이어 추가 실패 : " + error);
       return null;
     }
   }
@@ -252,11 +254,12 @@ export class PlayerService {
         planktonCount: gameoverPlayer.planktonCount,
         microplasticCount: gameoverPlayer.microplasticCount,
         playerCount: gameoverPlayer.playerCount,
-        point: gameoverPlayer.point
+        totalExp: gameoverPlayer.totalExp
       },
       playerAttackResponse: toPlayerAttackResponse(attackPlayer)
     };
 
+    logger.info("플레이어 업데이트 : " + JSON.stringify(response));
     return response;
   }
 
@@ -268,12 +271,17 @@ export class PlayerService {
    * @param {number} playerId
    * @param {number} planktonId
    */
-  async eatPlankton(playerId: number): Promise<Player> {
+  async eatPlankton(playerId: number, isPlankton: boolean): Promise<Player> {
     const player: Player = typeEnsure(await getPlayer(playerId), "CANNOT_FIND_PLAYER");
 
     if (player !== undefined) {
-      player.planktonCount++;
-      player.point++;
+      if (isPlankton) {
+        player.planktonCount++;
+        player.nowExp++;
+        player.totalExp++;
+      } else {
+        player.microplasticCount++;
+      }
       await updatePlayer(player);
     }
     return player;
@@ -288,6 +296,7 @@ export class PlayerService {
   async deletePlayerByPlayerId(playerId: number): Promise<void> {
     try {
       await deletePlayer(playerId);
+      await zREMPlayer(playerId);
     } catch (error) {
       throw new Error("PLAYER_NOT_FOUND");
     }

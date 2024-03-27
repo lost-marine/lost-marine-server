@@ -27,11 +27,12 @@ import { getErrorMessage, getSuccessMessage } from "./message/message-handler";
 import { typeEnsure, recordEnsure } from "@/util/assert";
 import g from "@/types/global";
 import { error } from "console";
-import { getPlayer, setPlayer } from "./repository/redis";
+import { getPlayer, setPlayer, zADDPlayer, zREMPlayer, getTenRanker } from "./repository/redis";
+import { logger } from "@/util/winston";
+import _ from "lodash";
 
 const dirname = path.resolve();
 const port: number = 3200; // 소켓 서버 포트
-const endpoint: string = "localhost";
 const app = express();
 const roomId: string = "room0";
 
@@ -78,10 +79,9 @@ app.get("/", (req: Request, res: Response) => {
 Container.set("width", 2688);
 Container.set("height", 1536);
 Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 8));
+const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
 io.on("connection", (socket: Socket) => {
-  const planktonManager = Container.get<PlanktonService>(PlanktonService);
-
   if (playerService.count === 0) {
     planktonManager.initPlankton();
   }
@@ -116,9 +116,11 @@ io.on("connection", (socket: Socket) => {
       const gameStartReq: PlayerResponse | null = addResult;
       if (gameStartReq !== null) {
         const planktonList: Plankton[] = Array.from(g.planktonList.values());
-        console.log(gameStartReq.myInfo);
+        logger.info("소켓 연결 성공 : " + JSON.stringify(addResult));
+        await zADDPlayer(typeEnsure(addResult?.myInfo.playerId), 0);
         sendWithoutMe(socket, "player-enter", gameStartReq.myInfo);
         sendToMe(socket.id, "game-start", { ...gameStartReq, planktonList } satisfies GameStartData);
+        sendToAll("ranking-receive", await getTenRanker());
       }
     } else {
       validResponse.isSuccess = false;
@@ -139,9 +141,9 @@ io.on("connection", (socket: Socket) => {
       validateResponse = playerService.validateEvolution(data.speciesId, beforeEvolvePlayer);
       if (validateResponse.isSuccess) {
         await playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
-        const { socketId, ...playerResponse } = beforeEvolvePlayer;
         await setPlayer(data.playerId, beforeEvolvePlayer);
-        sendToMe(beforeEvolvePlayer.socketId, "player-status-sync", playerResponse);
+        sendToAll("ranking-receive", await getTenRanker());
+        sendWithoutMe(socket, "others-evolution-sync", { playerId: data.playerId, speciesId: data.speciesId });
       }
     } catch (error: unknown) {
       validateResponse.isSuccess = false;
@@ -151,19 +153,19 @@ io.on("connection", (socket: Socket) => {
     }
   });
 
-  // game start
-
+  // throttle 처리
+  const throttlePositionSync = _.throttle(sendWithoutMe, 30);
   // 플레이어 본인 위치 전송
   socket.on("my-position-sync", async (data: Player) => {
     try {
       const result = await playerService.updatePlayerInfo(data);
 
       // 다른 플레이어에게 변경사항 알려줌
-      sendWithoutMe(socket, "others-position-sync", result);
+      throttlePositionSync(socket, "others-position-sync", result);
     } catch (error) {
       // 플레이어가 존재하지 않는 경우 퇴장 요청 날림
       sendToAll("player-quit", data.playerId);
-      console.log(error);
+      logger.error("플레이어가 존재하지 않음 : " + error);
     }
   });
 
@@ -171,10 +173,12 @@ io.on("connection", (socket: Socket) => {
   socket.on("player-quit", async (playerId: number) => {
     try {
       await playerService.deletePlayerByPlayerId(typeEnsure(playerId));
+      await zREMPlayer(playerId);
+      sendToAll("ranking-receive", await getTenRanker());
       sendWithoutMe(socket, "player-quit", playerId);
     } catch (error) {
       // 플레이어 삭제에 실패하면 에러 메세지
-      console.error(error);
+      logger.error("플레이어 삭제 실패 : " + error);
     }
     // playerId가 올바른 input이 아니라면 어떻게 해야할지
     // 논의가 필요합니다.
@@ -198,6 +202,11 @@ io.on("connection", (socket: Socket) => {
     try {
       recordEnsure(data, "INVALID_INPUT");
       result = await planktonManager.eatedPlankton(data.planktonId, data.playerId);
+      if (result.isSuccess) {
+        const player: Player = typeEnsure(await getPlayer(data.playerId));
+        await zADDPlayer(data.playerId, player.totalExp);
+        sendToAll("ranking-receive", await getTenRanker());
+      }
     } catch (error: unknown) {
       result.isSuccess = false;
       result.msg = getErrorMessage(error);
@@ -237,18 +246,18 @@ io.on("connection", (socket: Socket) => {
           const result = await playerService.attackPlayer(data);
 
           if (result !== undefined && result.length === 2) {
-            await attackPlaer(result);
+            await attackPlayer(result);
           }
 
           // 반대의 경우
           const reverseResult = await playerService.attackPlayer({ playerAId: data.playerBId, playerBId: data.playerAId });
 
           if (reverseResult !== undefined && reverseResult.length === 2) {
-            await attackPlaer(reverseResult);
+            await attackPlayer(reverseResult);
           }
         }
       } catch (error) {
-        console.log(error);
+        logger.error("공격 시 에러" + error);
 
         validateResponse.isSuccess = false;
         validateResponse.msg = getErrorMessage(error);
@@ -337,11 +346,9 @@ const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
   socket.to(roomId).except(socket.id).emit(event, data);
 };
 
-httpServer.listen(port, () => {
-  console.log(`${endpoint}:${port}`);
-});
+httpServer.listen(port, () => {});
 
-const attackPlaer = async (result: PlayerAttackResponse[]): Promise<void> => {
+const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
   // 플레이어 상태 정보 수정
   for (const player of result) {
     const mySocketId: string = player.socketId;
@@ -351,7 +358,6 @@ const attackPlaer = async (result: PlayerAttackResponse[]): Promise<void> => {
 
     // 게임 오버인 경우
     if (player.isGameOver) {
-      console.log("game-over");
       const gameOverResponse = await playerService.getGameOver(result);
       sendToMe(mySocketId, "game-over", gameOverResponse.playerGameOver);
       sendToAll("player-quit", player.playerId);
@@ -361,7 +367,12 @@ const attackPlaer = async (result: PlayerAttackResponse[]): Promise<void> => {
       const { socketId, ...attackerResponse } = playerAttackResponse;
       sendToMe(playerAttackResponse.socketId, "player-status-sync", attackerResponse);
       await playerService.deletePlayerByPlayerId(player.playerId);
+      // 공격 받은 사람은 삭제되고
+      await zREMPlayer(player.playerId);
+    } else {
+      await zADDPlayer(player.playerId, player.totalExp);
     }
+    sendToAll("ranking-receive", await getTenRanker());
   }
 };
 

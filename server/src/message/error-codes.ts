@@ -38,8 +38,8 @@ export const errorMessages: Record<string, Record<string, string>> = {
     ko: "존재하지 않는 티어입니다."
   },
 
-  LACK_POINT_FOR_EVOLUTION: {
-    en: "Lack Point for evolution",
+  LACK_EXP_FOR_EVOLUTION: {
+    en: "Lack Exp for evolution",
     ko: "포인트가 부족하여 진화가 불가능합니다."
   }
 };

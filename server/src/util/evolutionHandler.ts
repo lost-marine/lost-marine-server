@@ -4,7 +4,7 @@ import { type Species } from "@/types";
 
 export const evolutionHandler = {
   tierCode: 0,
-  requirePoint: 0,
+  requireExp: 0,
   rules: [
     {
       /**
@@ -48,9 +48,9 @@ export const evolutionHandler = {
        * @returns
        */
       match: function (targetSpeciesId: number, player: Player) {
-        const requirementPoint: number | undefined = TIER_ASSET.get(evolutionHandler.tierCode);
-        if (requirementPoint !== undefined) evolutionHandler.requirePoint = requirementPoint;
-        return requirementPoint !== undefined;
+        const requirementExp: number | undefined = TIER_ASSET.get(evolutionHandler.tierCode);
+        if (requirementExp !== undefined) evolutionHandler.requireExp = requirementExp;
+        return requirementExp !== undefined;
       },
       action: function (targetSpeciesId: number, player: Player): void {
         throw new Error("CANNOT_FIND_TIER");
@@ -64,10 +64,10 @@ export const evolutionHandler = {
        * @returns
        */
       match: function (targetSpeciesId: number, player: Player): boolean {
-        return player.point >= evolutionHandler.requirePoint;
+        return player.totalExp >= evolutionHandler.requireExp;
       },
       action: function (targetSpeciesId: number, player: Player): void {
-        throw new Error("LACK_POINT_FOR_EVOLUTION");
+        throw new Error("LACK_EXP_FOR_EVOLUTION");
       }
     }
   ]

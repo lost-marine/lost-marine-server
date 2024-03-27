@@ -57,7 +57,8 @@ export function toPlayerAttackResponse(player: Player): PlayerAttackResponse {
   const playerResponse: PlayerAttackResponse = {
     playerId: player.playerId,
     health: player.health,
-    point: player.point,
+    totalExp: player.totalExp,
+    nowExp: player.nowExp,
     centerX: player.centerX,
     centerY: player.centerY,
     isGameOver: player.isGameOver,
@@ -76,13 +77,15 @@ export function toPlayerAttackResponse(player: Player): PlayerAttackResponse {
  */
 export function updateAttackerPlayerCount(attackPlayer: Player, gameoverPlayer: Player): Player {
   attackPlayer.playerCount++;
-  attackPlayer.point += 10 + gameoverPlayer.point * 0.5;
+  attackPlayer.totalExp += 10 + Math.round(gameoverPlayer.totalExp * 0.5);
+  attackPlayer.nowExp += 10 + Math.round(gameoverPlayer.totalExp * 0.5);
   attackPlayer.microplasticCount += gameoverPlayer.microplasticCount;
   return attackPlayer;
 }
 
 export function evolvePlayer(player: Player, targetSpecies: Species): void {
   player.speciesId = targetSpecies.speciesId;
+  player.nowExp = 0;
   player.power = targetSpecies.power;
   player.width = targetSpecies.width;
   player.height = targetSpecies.height;
