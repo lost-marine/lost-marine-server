@@ -21,7 +21,16 @@ import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
-import { deletePlayer, existPlayer, getPlayer, getPlayerList, setPlayer, updatePlayer, zREMPlayer } from "@/repository/redis";
+import {
+  deletePlayer,
+  existPlayer,
+  getPlayer,
+  getPlayerList,
+  setPlayer,
+  updatePlayer,
+  zADDPlayer,
+  zREMPlayer
+} from "@/repository/redis";
 import {
   evolvePlayer,
   playerToArea,
@@ -243,6 +252,7 @@ export class PlayerService {
     updateAttackerPlayerCount(attackPlayer, gameoverPlayer);
 
     await updatePlayer(attackPlayer);
+    await zADDPlayer(attackPlayer.playerId, attackPlayer.totalExp);
 
     const response = {
       playerGameOver: {
