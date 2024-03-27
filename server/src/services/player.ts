@@ -254,7 +254,7 @@ export class PlayerService {
         planktonCount: gameoverPlayer.planktonCount,
         microplasticCount: gameoverPlayer.microplasticCount,
         playerCount: gameoverPlayer.playerCount,
-        point: gameoverPlayer.point
+        totalExp: gameoverPlayer.totalExp
       },
       playerAttackResponse: toPlayerAttackResponse(attackPlayer)
     };
@@ -277,7 +277,8 @@ export class PlayerService {
     if (player !== undefined) {
       if (isPlankton) {
         player.planktonCount++;
-        player.point++;
+        player.nowExp++;
+        player.totalExp++;
       } else {
         player.microplasticCount++;
       }

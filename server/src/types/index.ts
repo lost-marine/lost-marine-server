@@ -20,9 +20,9 @@ export type PlayerCrashRequest = {
   playerBId: number;
 };
 
-export type PlayerAttack = Pick<Player, "playerId" | "health" | "point" | "centerX" | "centerY" | "isGameOver">;
+export type PlayerAttack = Pick<Player, "playerId" | "health" | "totalExp" | "nowExp" | "centerX" | "centerY" | "isGameOver">;
 export type PlayerAttackResponse = PlayerAttack & { socketId: string };
-export type PlayerGameOver = Pick<Player, "playerId" | "planktonCount" | "microplasticCount" | "playerCount" | "point"> &
+export type PlayerGameOver = Pick<Player, "playerId" | "planktonCount" | "microplasticCount" | "playerCount" | "totalExp"> &
   GameOverData;
 
 export type GameOverData = {
@@ -56,7 +56,7 @@ export type Species = {
 
 export type Tier = {
   tierCode: number;
-  requirementPoint: number;
+  requirementExp: number;
 };
 
 export type ChatMessageSendResponse = {
@@ -73,12 +73,12 @@ export type ChatMessageReceiveRequest = {
 export type EvolveRequest = {
   speciesId: number;
   playerId: number;
-  point: number;
+  nowExp: number;
 };
 
 export type RankInfo = {
   playerId: number;
   nickname: string;
   speciesname: string;
-  point: number;
+  totalExp: number;
 };

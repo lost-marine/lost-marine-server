@@ -46,6 +46,6 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
 ]);
 
 export const TIER_ASSET: Map<number, number> = new Map<number, number>([
-  [1, 5],
+  [1, 0],
   [2, 5]
 ]);
