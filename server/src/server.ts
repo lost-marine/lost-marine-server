@@ -78,8 +78,6 @@ app.get("/", (req: Request, res: Response) => {
 //   });
 // }, 300);
 
-Container.set("width", 2688);
-Container.set("height", 1536);
 Container.set("planktonCnt", Math.floor(PLANKTON_SPAWN_LIST.length / 8));
 const planktonManager = Container.get<PlanktonService>(PlanktonService);
 
@@ -199,6 +197,8 @@ io.on("connection", (socket: Socket) => {
   socket.on("plankton-eat", async (data: { playerId: number; planktonId: number }, callback) => {
     let result: PlanktonEatResponse = {
       isSuccess: true,
+      planktonCount: 0,
+      microplasticCount: 0,
       msg: getSuccessMessage("EAT_PLANKTON_SUCCESS")
     };
     try {
@@ -212,6 +212,7 @@ io.on("connection", (socket: Socket) => {
     } catch (error: unknown) {
       result.isSuccess = false;
       result.msg = getErrorMessage(error);
+      logger.error("플랑크톤 섭취 실패!!!");
     } finally {
       callback(result);
       if (result.isSuccess) {
@@ -246,6 +247,7 @@ io.on("connection", (socket: Socket) => {
 
         if (validateResponse.isSuccess) {
           const result = await playerService.attackPlayer(data);
+
           if (result !== undefined && result.length === 2) {
             await attackPlayer(result);
           }
@@ -377,10 +379,6 @@ const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
       const { socketId, ...attackerResponse } = playerAttackResponse;
       sendToMe(playerAttackResponse.socketId, "player-status-sync", attackerResponse);
       await playerService.deletePlayerByPlayerId(player.playerId);
-      // 공격 받은 사람은 삭제되고
-      await zREMPlayer(player.playerId);
-    } else {
-      await zADDPlayer(player.playerId, player.totalExp);
     }
     sendToAll("ranking-receive", await getTenRanker());
   }
