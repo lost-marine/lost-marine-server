@@ -17,7 +17,9 @@ import {
   type Species,
   type EvolveRequest,
   type NicknameRequest,
-  type PlayerAttackResponse
+  type PlayerAttackResponse,
+  type itemRequest,
+  type itemSyncResponse
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -304,6 +306,15 @@ io.on("connection", (socket: Socket) => {
       }
     }
   });
+
+  socket.on("item-eat", async (request: itemRequest) => {
+    const response = await playerService.eatItem(request);
+
+    sendToMe(response.playerAttackResponse.socketId, "player-status-sync", response.playerAttackResponse);
+    sendToAll("item-sync", response.itemSync);
+
+    setItemSync(response.itemSync);
+  });
 });
 
 /**
@@ -373,6 +384,13 @@ const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
     }
     sendToAll("ranking-receive", await getTenRanker());
   }
+};
+
+const setItemSync = (item: itemSyncResponse): void => {
+  setTimeout(() => {
+    item.isActive = true;
+    sendToAll("item-sync", item);
+  }, 3000);
 };
 
 export const viteNodeApp = app;

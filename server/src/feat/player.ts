@@ -1,6 +1,8 @@
 import { Area } from "@/classes/area";
 import { type Player } from "@/classes/player";
-import { type Species, type PlayerAttackResponse } from "@/types";
+import { SPECIES_ASSET } from "@/constants/asset";
+import { type Species, type PlayerAttackResponse, type ItemInfo } from "@/types";
+import { typeEnsure } from "@/util/assert";
 import { createBuilder } from "@/util/builder";
 
 /**
@@ -90,4 +92,34 @@ export function evolvePlayer(player: Player, targetSpecies: Species): void {
   player.width = targetSpecies.width;
   player.height = targetSpecies.height;
   player.health = targetSpecies.health;
+}
+
+/**
+ * 플레이어 상태값을 변경
+ * @date 3/28/2024 - 1:50:06 PM
+ * @author 양소영
+ *
+ * @export
+ * @param {ItemInfo} item
+ * @param {Player} player
+ */
+export function updatePlayerStatusByItem(item: ItemInfo, player: Player): void {
+  const maximunHealth: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)).health;
+
+  if (item.heal > 0) {
+    player.health += player.health * (item.heal % 100);
+    if (maximunHealth < player.health) player.health = maximunHealth;
+  }
+
+  if (item.damage > 0) {
+    player.health -= item.damage;
+    if (player.health <= 0) {
+      player.health = 1;
+    }
+  }
+
+  if (item.exp > 0) {
+    player.totalExp += item.exp;
+    player.nowExp += item.exp;
+  }
 }

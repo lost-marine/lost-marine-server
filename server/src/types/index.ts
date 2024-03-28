@@ -82,3 +82,19 @@ export type RankInfo = {
   speciesname: string;
   totalExp: number;
 };
+
+export type ItemInfo = {
+  heal: number;
+  damage: number;
+  exp: number;
+};
+
+export type itemRequest = {
+  playerId: number;
+  itemId: number;
+};
+
+export type itemSyncResponse = {
+  itemId: number;
+  isActive: boolean;
+};
