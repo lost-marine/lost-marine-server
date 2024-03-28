@@ -75,29 +75,34 @@ export class PlanktonService {
    * @returns {number}
    */
   async eatedPlankton(planktonId: number, playerId: number): Promise<PlanktonEatResponse> {
+    const result: PlanktonEatResponse = {
+      isSuccess: false,
+      planktonCount: 0,
+      microplasticCount: 0,
+      msg: "섭취에 실패했습니다."
+    };
     if (g.planktonList != null && Boolean(g.planktonList.has(planktonId))) {
-      const planktonInfo: Plankton = typeEnsure(g.planktonList.get(planktonId));
-      g.planktonList?.delete(planktonId);
-      g.planktonTree?.remove(planktonInfo.makeTplanktonType());
-      this.eatedPlanktonCnt++;
-
       const playerService = Container.get<PlayerService>(PlayerService);
       try {
-        const player = await playerService.eatPlankton(playerId, planktonInfo.isPlankton);
-        const result: PlanktonEatResponse = {
-          isSuccess: true,
-          planktonCount: player.planktonCount,
-          microplasticCount: player.microplasticCount,
-          playerStatusInfo: convertTPlayerStatusInfo(player),
-          msg: "섭취에 성공했습니다."
-        };
-        return result;
+        const planktonInfo: Plankton = typeEnsure(g.planktonList.get(planktonId));
+        const player = typeEnsure(await playerService.eatPlankton(playerId, planktonInfo.isPlankton));
+        result.isSuccess = true;
+        result.planktonCount = player.planktonCount;
+        result.microplasticCount = player.microplasticCount;
+        result.playerStatusInfo = convertTPlayerStatusInfo(player);
+        result.msg = "섭취에 성공했습니다.";
+
+        g.planktonList?.delete(planktonId);
+        g.planktonTree?.remove(planktonInfo.makeTplanktonType());
+        this.eatedPlanktonCnt++;
       } catch (error) {
         logger.error("플랑크톤 섭취 에러 : " + error);
       }
+    } else {
+      logger.error("존재하지 않는 플랑크톤에 시도합니다.");
     }
 
-    return { isSuccess: false, planktonCount: 0, microplasticCount: 0, msg: "섭취에 실패했습니다." };
+    return result;
   }
 
   /**

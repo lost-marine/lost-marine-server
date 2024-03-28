@@ -13,6 +13,7 @@ export type PlayerResponse = {
 export type ValidateRespone = {
   isSuccess: boolean;
   msg: string;
+  nowExp?: number;
 };
 
 export type PlayerCrashRequest = {
