@@ -38,7 +38,9 @@ export type GameStartData = {
 
 export type PlanktonEatResponse = {
   isSuccess: boolean;
-  player?: Player;
+  planktonCount: number;
+  microplasticCount: number;
+  playerStatusInfo?: PlayerStatusInfo;
   msg: string;
 };
 
@@ -97,4 +99,13 @@ export type itemRequest = {
 export type itemSyncResponse = {
   itemId: number;
   isActive: boolean;
+};
+
+export type PlayerStatusInfo = {
+  playerId: number;
+  health: number;
+  nowExp: number;
+  centerX: number;
+  centerY: number;
+  isGameOver: boolean;
 };
