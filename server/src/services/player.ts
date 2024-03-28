@@ -8,7 +8,10 @@ import {
   type PlayerAttackResponse,
   type Species,
   type NicknameRequest,
-  type PlayerGameOver
+  type PlayerGameOver,
+  type itemRequest,
+  type ItemInfo,
+  type itemSyncResponse
 } from "@/types";
 import { MapService } from "./map";
 // import { type Position } from "@/classes/position";
@@ -18,7 +21,7 @@ import { createBuilder } from "@/util/builder";
 import { validateCanCrushArea } from "@/util/crushValid";
 import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
-import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
+import { SPECIES_ASSET, ITEM_ASSET, TIER_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
 import { getSuccessMessage } from "@/message/message-handler";
 import {
@@ -37,12 +40,14 @@ import {
   toPlayerAttackResponse,
   updateAttackerPlayerCount,
   updateDefenderInfo,
-  updatePlayerInfo
+  updatePlayerInfo,
+  updatePlayerStatusByItem
 } from "@/feat/player";
 import { logger } from "@/util/winston";
 // import _ from "lodash";
 @Service()
 export class PlayerService {
+  [x: string]: any;
   count: number;
 
   constructor() {
@@ -333,5 +338,32 @@ export class PlayerService {
     });
 
     return playerId;
+  }
+
+  /**
+   * 아이템 먹음
+   * @date 3/28/2024 - 1:18:11 PM
+   * @author 양소영
+   *
+   * @async
+   * @param {itemRequest} request
+   * @returns {Promise<{ playerAttackResponse: PlayerAttackResponse; itemSync: itemSyncResponse }>}
+   */
+  async eatItem(request: itemRequest): Promise<{ playerAttackResponse: PlayerAttackResponse; itemSync: itemSyncResponse }> {
+    const player: Player = typeEnsure(await getPlayer(request.playerId), "CANNOT_FIND_PLAYER");
+    const item: ItemInfo = typeEnsure(ITEM_ASSET.get(request.itemId), "CANNOT_FIND_ITEM");
+
+    updatePlayerStatusByItem(item, player);
+    await updatePlayer(player);
+
+    const response = {
+      playerAttackResponse: toPlayerAttackResponse(player),
+      itemSync: {
+        itemId: request.itemId,
+        isActive: false
+      }
+    };
+
+    return response;
   }
 }

@@ -1,4 +1,4 @@
-import { type Species } from "@/types";
+import { type ItemInfo, type Species } from "@/types";
 
 export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
   [
@@ -48,4 +48,47 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
 export const TIER_ASSET: Map<number, number> = new Map<number, number>([
   [1, 0],
   [2, 5]
+]);
+
+export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
+  [
+    0,
+    {
+      heal: 30,
+      damage: 0,
+      exp: 0
+    }
+  ],
+  [
+    1,
+    {
+      heal: 0,
+      damage: 0,
+      exp: 50
+    }
+  ],
+  [
+    2,
+    {
+      heal: 10,
+      damage: 0,
+      exp: 0
+    }
+  ],
+  [
+    3,
+    {
+      heal: 20,
+      damage: 0,
+      exp: 0
+    }
+  ],
+  [
+    4,
+    {
+      heal: 0,
+      damage: 30,
+      exp: 0
+    }
+  ]
 ]);
