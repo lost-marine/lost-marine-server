@@ -117,7 +117,7 @@ export function updatePlayerStatusByItem(item: ItemInfo, player: Player): void {
   const maximunHealth: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)).health;
 
   if (item.heal > 0) {
-    player.health += player.health * (item.heal % 100);
+    player.health += maximunHealth * (item.heal / 100);
     if (maximunHealth < player.health) player.health = maximunHealth;
   }
 

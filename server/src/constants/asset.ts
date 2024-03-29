@@ -167,31 +167,7 @@ export const TIER_ASSET: Map<number, number> = new Map<number, number>([
 
 export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
   [
-    0,
-    {
-      heal: 10,
-      damage: 0,
-      exp: 0
-    }
-  ],
-  [
     1,
-    {
-      heal: 0,
-      damage: 0,
-      exp: 50
-    }
-  ],
-  [
-    2,
-    {
-      heal: 10,
-      damage: 0,
-      exp: 0
-    }
-  ],
-  [
-    3,
     {
       heal: 20,
       damage: 0,
@@ -199,7 +175,31 @@ export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
     }
   ],
   [
+    2,
+    {
+      heal: 0,
+      damage: 0,
+      exp: 50
+    }
+  ],
+  [
+    3,
+    {
+      heal: 10,
+      damage: 0,
+      exp: 0
+    }
+  ],
+  [
     4,
+    {
+      heal: 20,
+      damage: 0,
+      exp: 0
+    }
+  ],
+  [
+    5,
     {
       heal: 0,
       damage: 30,
