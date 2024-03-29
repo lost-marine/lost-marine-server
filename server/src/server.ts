@@ -130,6 +130,7 @@ io.on("connection", (socket: Socket) => {
   });
   // 진화요청(Client→ Server)
   socket.on("player-evolution", async (data: EvolveRequest, callback) => {
+    logger.info("진화 요청이 들어왔습니다!");
     let validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("PLAYER_EVOLVE_SUCCESS")
