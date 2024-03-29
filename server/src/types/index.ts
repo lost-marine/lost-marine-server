@@ -117,3 +117,8 @@ export type AttackedPlayerResponse = {
   playerId: number; // 공격 받은 사람
   damage: number;
 };
+export type KillLog = {
+  msg: string;
+  type: string;
+  timeStamp: number;
+};
