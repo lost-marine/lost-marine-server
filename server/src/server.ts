@@ -19,7 +19,8 @@ import {
   type NicknameRequest,
   type PlayerAttackResponse,
   type itemRequest,
-  type itemSyncResponse
+  type itemSyncResponse,
+  type AttackedPlayerResponse
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -142,12 +143,14 @@ io.on("connection", (socket: Socket) => {
       if (validateResponse.isSuccess) {
         await playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
         await setPlayer(data.playerId, beforeEvolvePlayer);
+        validateResponse.nowExp = beforeEvolvePlayer.nowExp;
         sendToAll("ranking-receive", await getTenRanker());
         sendWithoutMe(socket, "others-evolution-sync", { playerId: data.playerId, speciesId: data.speciesId });
       }
     } catch (error: unknown) {
       validateResponse.isSuccess = false;
       validateResponse.msg = getErrorMessage(error);
+      logger.error(validateResponse.msg);
     } finally {
       callback(validateResponse);
     }
@@ -195,6 +198,7 @@ io.on("connection", (socket: Socket) => {
 
   // 플랑크톤 섭취 이벤트
   socket.on("plankton-eat", async (data: { playerId: number; planktonId: number }, callback) => {
+    logger.info("플랑크톤 ID: " + data.planktonId + " 에 대한 섭취 시도");
     let result: PlanktonEatResponse = {
       isSuccess: true,
       planktonCount: 0,
@@ -203,11 +207,14 @@ io.on("connection", (socket: Socket) => {
     };
     try {
       recordEnsure(data, "INVALID_INPUT");
+      const player: Player = typeEnsure(await getPlayer(data.playerId));
       result = await planktonManager.eatedPlankton(data.planktonId, data.playerId);
       if (result.isSuccess) {
-        const player: Player = typeEnsure(await getPlayer(data.playerId));
-        await zADDPlayer(data.playerId, player.totalExp);
+        logger.info("Player eat plankton");
+        await zADDPlayer(data.playerId, player.totalExp + 1);
         sendToAll("ranking-receive", await getTenRanker());
+      } else {
+        logger.info("isSuccess is false");
       }
     } catch (error: unknown) {
       result.isSuccess = false;
@@ -226,7 +233,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   // 플레이어 간 공격
-  socket.on("player-crash", async (data: PlayerCrashRequest, callback) => {
+  socket.on("player-crash", async (data: PlayerCrashRequest) => {
     const validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
@@ -264,8 +271,6 @@ io.on("connection", (socket: Socket) => {
 
         validateResponse.isSuccess = false;
         validateResponse.msg = getErrorMessage(error);
-      } finally {
-        callback(validateResponse);
       }
     }
   });
@@ -361,10 +366,16 @@ const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
 httpServer.listen(port, () => {});
 
 const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
+  const attackedPlayerResponse: AttackedPlayerResponse = {
+    playerId: result[1].playerId,
+    damage: result[0].power
+  };
+
+  sendToAll("player-crash", attackedPlayerResponse);
   // 플레이어 상태 정보 수정
   for (const player of result) {
     const mySocketId: string = player.socketId;
-    const { socketId, ...playerResponse } = player;
+    const { socketId, power, ...playerResponse } = player;
     // 싱크 맞추는 부분에 대한 최적화 필요
     sendToMe(mySocketId, "player-status-sync", playerResponse);
 
@@ -373,6 +384,7 @@ const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
       const gameOverResponse = await playerService.getGameOver(result);
       sendToMe(mySocketId, "game-over", gameOverResponse.playerGameOver);
       sendToAll("player-quit", player.playerId);
+      sendToAll("system-log", gameOverResponse.killLog);
 
       // 공격자의 포인트 정보 갱신
       const playerAttackResponse: PlayerAttackResponse = gameOverResponse.playerAttackResponse;

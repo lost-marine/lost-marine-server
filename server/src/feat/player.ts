@@ -64,7 +64,8 @@ export function toPlayerAttackResponse(player: Player): PlayerAttackResponse {
     centerX: player.centerX,
     centerY: player.centerY,
     isGameOver: player.isGameOver,
-    socketId: player.socketId
+    socketId: player.socketId,
+    power: player.power
   };
   return playerResponse;
 }
@@ -150,4 +151,21 @@ export function convertTPlayerStatusInfo(player: Player): PlayerStatusInfo {
     centerY: player.centerY,
     isGameOver: false
   };
+}
+
+/**
+ * 킬로그 메세지를 만들어줌
+ * @date 3/29/2024 - 12:39:32 PM
+ * @author 양소영
+ *
+ * @export
+ * @param {Player} attackPlayer
+ * @param {Player} gameoverPlayer
+ * @returns {string}
+ */
+export function getKillLog(attackPlayer: Player, gameoverPlayer: Player): string {
+  const attackerPlayerSpecies: string = typeEnsure(SPECIES_ASSET.get(attackPlayer.speciesId)).name;
+  const gameOverPlayerSpecies: string = typeEnsure(SPECIES_ASSET.get(gameoverPlayer.speciesId)).name;
+
+  return `[${attackerPlayerSpecies}] ${attackPlayer.nickname}님이 [${gameOverPlayerSpecies}] ${gameoverPlayer.nickname}님을 잡아먹었습니다`;
 }
