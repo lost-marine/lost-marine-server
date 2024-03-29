@@ -19,7 +19,8 @@ import {
   type NicknameRequest,
   type PlayerAttackResponse,
   type itemRequest,
-  type itemSyncResponse
+  type itemSyncResponse,
+  type AttackedPlayerResponse
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -232,7 +233,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   // 플레이어 간 공격
-  socket.on("player-crash", async (data: PlayerCrashRequest, callback) => {
+  socket.on("player-crash", async (data: PlayerCrashRequest) => {
     const validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
@@ -270,8 +271,6 @@ io.on("connection", (socket: Socket) => {
 
         validateResponse.isSuccess = false;
         validateResponse.msg = getErrorMessage(error);
-      } finally {
-        callback(validateResponse);
       }
     }
   });
@@ -367,10 +366,16 @@ const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
 httpServer.listen(port, () => {});
 
 const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
+  const attackedPlayerResponse: AttackedPlayerResponse = {
+    playerId: result[1].playerId,
+    damage: result[0].power
+  };
+
+  sendToAll("player-crash", attackedPlayerResponse);
   // 플레이어 상태 정보 수정
   for (const player of result) {
     const mySocketId: string = player.socketId;
-    const { socketId, ...playerResponse } = player;
+    const { socketId, power, ...playerResponse } = player;
     // 싱크 맞추는 부분에 대한 최적화 필요
     sendToMe(mySocketId, "player-status-sync", playerResponse);
 
