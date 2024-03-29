@@ -142,12 +142,14 @@ io.on("connection", (socket: Socket) => {
       if (validateResponse.isSuccess) {
         await playerService.playerEvolution(data.speciesId, beforeEvolvePlayer);
         await setPlayer(data.playerId, beforeEvolvePlayer);
+        validateResponse.nowExp = beforeEvolvePlayer.nowExp;
         sendToAll("ranking-receive", await getTenRanker());
         sendWithoutMe(socket, "others-evolution-sync", { playerId: data.playerId, speciesId: data.speciesId });
       }
     } catch (error: unknown) {
       validateResponse.isSuccess = false;
       validateResponse.msg = getErrorMessage(error);
+      logger.error(validateResponse.msg);
     } finally {
       callback(validateResponse);
     }
@@ -195,6 +197,7 @@ io.on("connection", (socket: Socket) => {
 
   // 플랑크톤 섭취 이벤트
   socket.on("plankton-eat", async (data: { playerId: number; planktonId: number }, callback) => {
+    logger.info("플랑크톤 ID: " + data.planktonId + " 에 대한 섭취 시도");
     let result: PlanktonEatResponse = {
       isSuccess: true,
       planktonCount: 0,
@@ -203,11 +206,14 @@ io.on("connection", (socket: Socket) => {
     };
     try {
       recordEnsure(data, "INVALID_INPUT");
+      const player: Player = typeEnsure(await getPlayer(data.playerId));
       result = await planktonManager.eatedPlankton(data.planktonId, data.playerId);
       if (result.isSuccess) {
-        const player: Player = typeEnsure(await getPlayer(data.playerId));
-        await zADDPlayer(data.playerId, player.totalExp);
+        logger.info("Player eat plankton");
+        await zADDPlayer(data.playerId, player.totalExp + 1);
         sendToAll("ranking-receive", await getTenRanker());
+      } else {
+        logger.info("isSuccess is false");
       }
     } catch (error: unknown) {
       result.isSuccess = false;

@@ -1,6 +1,7 @@
 import { type Player } from "@/classes/player";
 import { SPECIES_ASSET, TIER_ASSET } from "@/constants/asset";
 import { type Species } from "@/types";
+import { logger } from "./winston";
 
 export const evolutionHandler = {
   tierCode: 0,
@@ -21,6 +22,7 @@ export const evolutionHandler = {
         return targetEvolutionSpecies !== undefined;
       },
       action: function (targetSpeciesId: number, player: Player): void {
+        logger.error("진화 개체 ID가 SPECIES ASSET에 존재하지 않습니다.");
         throw new Error("INVALID_INPUT");
       }
     },
@@ -37,6 +39,7 @@ export const evolutionHandler = {
         return false;
       },
       action: function (targetEvolutionSpeciesId: number, player: Player): void {
+        logger.error("진화할 수 있는 ID가 아닙니다.");
         throw new Error("PLAYER_FAIL_EVOLVE");
       }
     },
@@ -53,6 +56,7 @@ export const evolutionHandler = {
         return requirementExp !== undefined;
       },
       action: function (targetSpeciesId: number, player: Player): void {
+        logger.error("진화 개체 정보가 TIER_ASSET에 존재하지 않습니다.");
         throw new Error("CANNOT_FIND_TIER");
       }
     },
@@ -67,6 +71,7 @@ export const evolutionHandler = {
         return player.totalExp >= evolutionHandler.requireExp;
       },
       action: function (targetSpeciesId: number, player: Player): void {
+        logger.error("진화 경험치가 부족합니다!");
         throw new Error("LACK_EXP_FOR_EVOLUTION");
       }
     }

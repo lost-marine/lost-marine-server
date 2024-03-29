@@ -10,7 +10,7 @@ const playerKey: string = "player:";
 
 dotenv.config();
 
-const client = redis.createClient({
+export const client = redis.createClient({
   url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
   password: `${process.env.REDIS_PASS}`
 });
@@ -144,7 +144,10 @@ export async function updatePlayer(player: Player): Promise<boolean> {
   try {
     if (await existPlayer(player.playerId)) {
       const playerJSON = JSON.stringify(player);
-      await client.set(playerKey + player.playerId, playerJSON);
+      await client
+        .multi()
+        .set(playerKey + player.playerId, playerJSON)
+        .exec();
     }
   } catch (error) {
     logger.error("플레이어 정보 갱신 실패 : " + error);
