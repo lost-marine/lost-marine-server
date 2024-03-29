@@ -131,7 +131,11 @@ io.on("connection", (socket: Socket) => {
   });
   // 진화요청(Client→ Server)
   socket.on("player-evolution", async (data: EvolveRequest, callback) => {
+<<<<<<< HEAD
     logger.info("진화를 요청합니다.");
+=======
+    logger.info("진화 요청이 들어왔습니다!");
+>>>>>>> 131f929 (Comment: 진화 디버그를 위한 logger 추가)
     let validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("PLAYER_EVOLVE_SUCCESS")
