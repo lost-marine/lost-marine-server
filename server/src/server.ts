@@ -373,6 +373,7 @@ const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
       const gameOverResponse = await playerService.getGameOver(result);
       sendToMe(mySocketId, "game-over", gameOverResponse.playerGameOver);
       sendToAll("player-quit", player.playerId);
+      sendToAll("system-log", gameOverResponse.killLog);
 
       // 공격자의 포인트 정보 갱신
       const playerAttackResponse: PlayerAttackResponse = gameOverResponse.playerAttackResponse;
