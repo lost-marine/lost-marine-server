@@ -208,7 +208,6 @@ io.on("connection", (socket: Socket) => {
       result = await planktonManager.eatedPlankton(data.planktonId, data.playerId);
       if (result.isSuccess) {
         logger.info("Player eat plankton");
-        // logger.info("nowExp: " + player.nowExp + " totalExp: " + player.totalExp);
         await zADDPlayer(data.playerId, player.totalExp + 1);
         sendToAll("ranking-receive", await getTenRanker());
       } else {
