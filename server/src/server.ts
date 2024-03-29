@@ -227,7 +227,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   // 플레이어 간 공격
-  socket.on("player-crash", async (data: PlayerCrashRequest, callback) => {
+  socket.on("player-crash", async (data: PlayerCrashRequest) => {
     const validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("COLLISION_VALIDATE_SUCCESS")
@@ -265,8 +265,6 @@ io.on("connection", (socket: Socket) => {
 
         validateResponse.isSuccess = false;
         validateResponse.msg = getErrorMessage(error);
-      } finally {
-        callback(validateResponse);
       }
     }
   });
