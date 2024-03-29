@@ -299,14 +299,14 @@ export class PlayerService {
    */
   async eatPlankton(playerId: number, isPlankton: boolean): Promise<Player> {
     const player: Player = typeEnsure(await getPlayer(playerId), "CANNOT_FIND_PLAYER");
-    const maximunHealth: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)).health;
 
     try {
       if (isPlankton) {
         player.planktonCount++;
         player.nowExp++;
         player.totalExp++;
-        if (maximunHealth > player.health) player.health++;
+        logger.info("플랑크톤을 섭취합니다. totalExp: " + player.totalExp);
+        if (player.maximunHealth > player.health) player.health++;
       } else {
         player.microplasticCount++;
       }

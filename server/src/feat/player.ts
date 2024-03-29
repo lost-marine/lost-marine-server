@@ -102,6 +102,7 @@ export function evolvePlayer(player: Player, targetSpecies: Species, usedExp: nu
   player.width = targetSpecies.width;
   player.height = targetSpecies.height;
   player.health = targetSpecies.health;
+  player.maxHealth = targetSpecies.health;
 }
 
 /**
@@ -114,11 +115,9 @@ export function evolvePlayer(player: Player, targetSpecies: Species, usedExp: nu
  * @param {Player} player
  */
 export function updatePlayerStatusByItem(item: ItemInfo, player: Player): void {
-  const maximunHealth: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)).health;
-
   if (item.heal > 0) {
-    player.health += maximunHealth * (item.heal / 100);
-    if (maximunHealth < player.health) player.health = maximunHealth;
+    player.health += player.health * (item.heal % 100);
+    if (player.maximunHealth < player.health) player.health = player.maximunHealth;
   }
 
   if (item.damage > 0) {
