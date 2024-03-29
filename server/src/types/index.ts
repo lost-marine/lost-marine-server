@@ -109,3 +109,9 @@ export type PlayerStatusInfo = {
   centerY: number;
   isGameOver: boolean;
 };
+
+export type KillLog = {
+  msg: string;
+  type: string;
+  timeStamp: number;
+};

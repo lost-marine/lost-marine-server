@@ -11,7 +11,8 @@ import {
   type PlayerGameOver,
   type itemRequest,
   type ItemInfo,
-  type itemSyncResponse
+  type itemSyncResponse,
+  type KillLog
 } from "@/types";
 import { MapService } from "./map";
 // import { type Position } from "@/classes/position";
@@ -36,6 +37,7 @@ import {
 } from "@/repository/redis";
 import {
   evolvePlayer,
+  getKillLog,
   playerToArea,
   toPlayerAttackResponse,
   updateAttackerPlayerCount,
@@ -250,7 +252,7 @@ export class PlayerService {
    */
   async getGameOver(
     playerList: PlayerAttackResponse[]
-  ): Promise<{ playerGameOver: PlayerGameOver; playerAttackResponse: PlayerAttackResponse }> {
+  ): Promise<{ playerGameOver: PlayerGameOver; playerAttackResponse: PlayerAttackResponse; killLog: KillLog }> {
     const attackPlayer: Player = typeEnsure(await getPlayer(playerList[0].playerId), "CANNOT_FIND_PLAYER");
     const gameoverPlayer: Player = typeEnsure(await getPlayer(playerList[1].playerId), "CANNOT_FIND_PLAYER");
 
@@ -271,9 +273,14 @@ export class PlayerService {
         playerCount: gameoverPlayer.playerCount,
         totalExp: gameoverPlayer.totalExp
       },
-      playerAttackResponse: toPlayerAttackResponse(attackPlayer)
+      playerAttackResponse: toPlayerAttackResponse(attackPlayer),
+      killLog: {
+        msg: getKillLog(attackPlayer, gameoverPlayer),
+        type: "kill-log",
+        timeStamp: Date.now()
+      }
     };
-
+    logger.info(response.killLog.msg);
     logger.info("플레이어 업데이트 : " + JSON.stringify(response));
     return response;
   }
