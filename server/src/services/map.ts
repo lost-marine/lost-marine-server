@@ -72,10 +72,8 @@ export class MapService {
 
     if (typeof flag === "boolean") {
       if (flag) {
-        return true;
-        // console.log(area.centerX + ", " + area.centerY + ", " + "해당 위치에 플랑크톤이 스폰되면 안됩니다. 스킵.");
-        // process.exit(1);
-        // return false;
+        logger.info(`해당 위치에는 플랑크톤이 이미 존재합니다 : ${area.centerX}, ${area.centerY}`);
+        return false;
       } else {
         return true;
       }
