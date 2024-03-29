@@ -33,7 +33,8 @@ import {
   setPlayer,
   updatePlayer,
   zADDPlayer,
-  zREMPlayer
+  zREMPlayer,
+  client
 } from "@/repository/redis";
 import {
   evolvePlayer,
@@ -135,7 +136,8 @@ export class PlayerService {
   async playerEvolution(targetSpeciesId: number, player: Player): Promise<void> {
     const targetSpecies: Species = typeEnsure(SPECIES_ASSET.get(targetSpeciesId), "CANNOT_FIND_TIER");
     const useExp: number = typeEnsure(TIER_ASSET.get(targetSpecies.tierCode));
-    evolvePlayer(player, targetSpecies, useExp);
+    const beforeTierExp: number = typeEnsure(TIER_ASSET.get(targetSpecies.tierCode - 1));
+    evolvePlayer(player, targetSpecies, useExp - beforeTierExp);
     await updatePlayer(player);
   }
 
@@ -296,16 +298,23 @@ export class PlayerService {
   async eatPlankton(playerId: number, isPlankton: boolean): Promise<Player> {
     const player: Player = typeEnsure(await getPlayer(playerId), "CANNOT_FIND_PLAYER");
     const maximunHealth: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)).health;
-    if (player !== undefined) {
+
+    try {
       if (isPlankton) {
         player.planktonCount++;
         player.nowExp++;
         player.totalExp++;
+        logger.info("플랑크톤을 섭취합니다. totalExp: " + player.totalExp);
         if (maximunHealth > player.health) player.health++;
       } else {
+        logger.info("미세 플라스틱을 섭취합니다.");
         player.microplasticCount++;
       }
+      await client.watch("player:" + player.playerId);
       await updatePlayer(player);
+      await client.unwatch();
+    } catch (error: unknown) {
+      logger.error(error);
     }
     return player;
   }
