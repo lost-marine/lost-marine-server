@@ -283,39 +283,25 @@ export class PlayerService {
    * @param {number} playerId
    * @param {number} planktonId
    */
-  async eatPlankton(playerId: number, isPlankton: boolean): Promise<Player | null> {
-    let player: Player | null = null;
+  async eatPlankton(playerId: number, isPlankton: boolean): Promise<Player> {
+    const player: Player = typeEnsure(await getPlayer(playerId), "CANNOT_FIND_PLAYER");
+    const maximunHealth: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)).health;
+
     try {
-      logger.info("섭취 시도!");
-      const multi = client.multi();
-      const isExist = await multi.exists("player:" + playerId).exec();
-      if (isExist === null || isExist === undefined) throw new Error("PLAYER_NO_EXIST_ERROR");
-      // player = typeEnsure(await getPlayer(playerId), "CANNOT_FIND_PLAYER");
-      logger.info("player를 얻어옵니다");
-      const getinfo = await multi.get("player:" + playerId).exec();
-      const json: string = getinfo[getinfo.length - 1] as string;
-      logger.info(json);
-      player = JSON.parse(json) as Player;
-      logger.info(player);
-      const maximunHealth: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)).health;
-      logger.info("before eat event --- " + "nowExp: " + player.nowExp + " totalExp: " + player.totalExp);
-      if (player !== undefined) {
-        if (isPlankton) {
-          logger.info("플랑크톤을 섭취합니다");
-          player.planktonCount++;
-          player.nowExp++;
-          player.totalExp++;
-          if (maximunHealth > player.health) player.health++;
-          logger.info("플레이어 경험치 상승? " + "nowExp: " + player.nowExp);
-        } else {
-          logger.info("eat microplastic");
-          player.microplasticCount++;
-        }
-        await multi.set("player:" + playerId, JSON.stringify(player)).exec();
-        // await updatePlayer(player);
+      if (isPlankton) {
+        player.planktonCount++;
+        player.nowExp++;
+        player.totalExp++;
+        logger.info("플랑크톤을 섭취합니다. totalExp: " + player.totalExp);
+        if (maximunHealth > player.health) player.health++;
+      } else {
+        logger.info("미세 플라스틱을 섭취합니다.");
+        player.microplasticCount++;
       }
+      await client.watch("player:" + player.playerId);
+      await updatePlayer(player);
+      await client.unwatch();
     } catch (error: unknown) {
-      logger.error("알 수 없는 에러");
       logger.error(error);
     }
     return player;
