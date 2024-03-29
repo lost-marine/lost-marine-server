@@ -5,7 +5,7 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
     1,
     {
       speciesId: 1,
-      name: "니모",
+      name: "흰동가리",
       imgUrl: "imgurl/1/1_nemo", // img경로/레벨/개체id_개체명
       width: 63,
       height: 42,
@@ -103,7 +103,7 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
     8,
     {
       speciesId: 8,
-      name: "가오리",
+      name: "대왕쥐가오리",
       imgUrl: "imgurl/3/3_Stingray",
       width: 181,
       height: 176,
