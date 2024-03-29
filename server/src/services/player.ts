@@ -351,7 +351,7 @@ export class PlayerService {
    */
   async eatItem(request: itemRequest): Promise<{ playerAttackResponse: PlayerAttackResponse; itemSync: itemSyncResponse }> {
     const player: Player = typeEnsure(await getPlayer(request.playerId), "CANNOT_FIND_PLAYER");
-    const item: ItemInfo = typeEnsure(ITEM_ASSET.get(request.itemId), "CANNOT_FIND_ITEM");
+    const item: ItemInfo = typeEnsure(ITEM_ASSET.get(request.type), "CANNOT_FIND_ITEM");
 
     updatePlayerStatusByItem(item, player);
     await updatePlayer(player);

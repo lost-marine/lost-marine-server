@@ -94,6 +94,7 @@ export type ItemInfo = {
 export type itemRequest = {
   playerId: number;
   itemId: number;
+  type: number;
 };
 
 export type itemSyncResponse = {

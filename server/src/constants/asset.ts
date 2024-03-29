@@ -54,7 +54,7 @@ export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
   [
     0,
     {
-      heal: 30,
+      heal: 10,
       damage: 0,
       exp: 0
     }

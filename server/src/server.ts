@@ -388,7 +388,7 @@ const setItemSync = (item: itemSyncResponse): void => {
   setTimeout(() => {
     item.isActive = true;
     sendToAll("item-sync", item);
-  }, 3000);
+  }, 30000);
 };
 
 export const viteNodeApp = app;
