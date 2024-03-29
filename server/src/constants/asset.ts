@@ -7,7 +7,7 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       speciesId: 1,
       name: "흰동가리",
       imgUrl: "imgurl/1/1_nemo", // img경로/레벨/개체id_개체명
-      width: 63,
+      width: 66,
       height: 42,
       power: 10,
       health: 100,
@@ -160,9 +160,9 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
 export const TIER_ASSET: Map<number, number> = new Map<number, number>([
   [0, 0],
   [1, 0],
-  [2, 5],
-  [3, 15],
-  [4, 25]
+  [2, 10],
+  [3, 30],
+  [4, 60]
 ]);
 
 export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
