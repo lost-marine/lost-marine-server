@@ -315,12 +315,16 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("item-eat", async (request: itemRequest) => {
-    const response = await playerService.eatItem(request);
+    try {
+      const response = await playerService.eatItem(request);
 
-    sendToMe(response.playerAttackResponse.socketId, "player-status-sync", response.playerAttackResponse);
-    sendToAll("item-sync", response.itemSync);
+      sendToMe(response.playerAttackResponse.socketId, "player-status-sync", response.playerAttackResponse);
+      sendToAll("item-sync", response.itemSync);
 
-    setItemSync(response.itemSync);
+      setItemSync(response.itemSync);
+    } catch (error) {
+      logger.error("item-eat 에러" + error);
+    }
   });
 });
 
@@ -400,7 +404,7 @@ const setItemSync = (item: itemSyncResponse): void => {
   setTimeout(() => {
     item.isActive = true;
     sendToAll("item-sync", item);
-  }, 3000);
+  }, 30000);
 };
 
 export const viteNodeApp = app;
