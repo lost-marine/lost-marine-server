@@ -20,7 +20,10 @@ export type PlayerCrashRequest = {
   playerBId: number;
 };
 
-export type PlayerAttack = Pick<Player, "playerId" | "health" | "totalExp" | "nowExp" | "centerX" | "centerY" | "isGameOver">;
+export type PlayerAttack = Pick<
+  Player,
+  "playerId" | "health" | "totalExp" | "nowExp" | "centerX" | "centerY" | "isGameOver" | "power"
+>;
 export type PlayerAttackResponse = PlayerAttack & { socketId: string };
 export type PlayerGameOver = Pick<Player, "playerId" | "planktonCount" | "microplasticCount" | "playerCount" | "totalExp"> &
   GameOverData;
@@ -108,4 +111,9 @@ export type PlayerStatusInfo = {
   centerX: number;
   centerY: number;
   isGameOver: boolean;
+};
+
+export type AttackedPlayerResponse = {
+  playerId: number; // 공격 받은 사람
+  damage: number;
 };

@@ -64,7 +64,8 @@ export function toPlayerAttackResponse(player: Player): PlayerAttackResponse {
     centerX: player.centerX,
     centerY: player.centerY,
     isGameOver: player.isGameOver,
-    socketId: player.socketId
+    socketId: player.socketId,
+    power: player.power
   };
   return playerResponse;
 }
