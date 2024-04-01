@@ -110,12 +110,11 @@ export class PlanktonService {
    * @returns {Plankton[]} 스폰 된 플랑크톤 배열
    */
   async spawnPlankton(): Promise<Plankton[]> {
+    logger.info(`플랑크톤이 재생성됩니다; eatedPlanktonCnt: ${this.eatedPlanktonCnt} mapPlanktonCnt: ${this.mapPlanktonCnt}`);
     const responedPlankton: Plankton[] = [];
     const mapService = Container.get<MapService>(MapService);
-    // logger.info("spawnPlankton! " + this.eatedPlanktonCnt);
     for (let i = this.eatedPlanktonCnt; i > 0; i--) {
       if (this.mapPlanktonCnt >= this.planktonCnt) {
-        logger.info("mapPlanktonCnt: " + this.mapPlanktonCnt);
         break;
       }
       const spawnArea: Area = mapService.getSpawnableArea(1);
