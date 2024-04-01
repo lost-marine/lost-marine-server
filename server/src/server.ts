@@ -198,7 +198,7 @@ io.on("connection", (socket: Socket) => {
 
   // 플랑크톤 섭취 이벤트
   socket.on("plankton-eat", async (data: { playerId: number; planktonId: number }, callback) => {
-    logger.info("플랑크톤 ID: " + data.planktonId + " 에 대한 섭취 시도");
+    // logger.info("플랑크톤 ID: " + data.planktonId + " 에 대한 섭취 시도");
     let result: PlanktonEatResponse = {
       isSuccess: true,
       planktonCount: 0,
@@ -210,11 +210,9 @@ io.on("connection", (socket: Socket) => {
       const player: Player = typeEnsure(await getPlayer(data.playerId));
       result = await planktonManager.eatedPlankton(data.planktonId, data.playerId);
       if (result.isSuccess) {
-        logger.info("Player eat plankton");
+        // logger.info("Player eat plankton");
         await zADDPlayer(data.playerId, player.totalExp + 1);
         sendToAll("ranking-receive", await getTenRanker());
-      } else {
-        logger.info("isSuccess is false");
       }
     } catch (error: unknown) {
       result.isSuccess = false;
@@ -225,9 +223,9 @@ io.on("connection", (socket: Socket) => {
       if (result.isSuccess) {
         sendWithoutMe(socket, "plankton-delete", data.planktonId);
       }
-      if (planktonManager.eatedPlanktonCnt > 2) {
+      if (planktonManager.eatedPlanktonCnt > 3) {
         // respone을 위한 플랑크톤 개수 조절이 필요합니다.
-        sendToAll("plankton-respawn", planktonManager.spawnPlankton());
+        sendToAll("plankton-respawn", await planktonManager.spawnPlankton());
       }
     }
   });
