@@ -1,5 +1,5 @@
 import { Plankton } from "@/classes/plankton";
-import RBush from "rbush";
+import RBush, { type BBox } from "rbush";
 import { createBuilder } from "@/util/builder";
 import { Inject, Service, Container } from "typedi";
 import "reflect-metadata";
@@ -79,7 +79,18 @@ export class PlanktonService {
     if (g.planktonList != null && Boolean(g.planktonList.has(planktonId))) {
       const planktonInfo: Plankton = typeEnsure(g.planktonList.get(planktonId));
       g.planktonList?.delete(planktonId);
-      g.planktonTree?.remove(planktonInfo.makeTplanktonType());
+      const targetItems: BBox[] = g.planktonTree.search(planktonInfo.makeTplanktonType());
+      let target: BBox = {
+        minX: 0,
+        minY: 0,
+        maxX: 0,
+        maxY: 0
+      };
+      if (targetItems.length > 0) {
+        target = targetItems[0];
+      }
+      g.planktonTree?.remove(target);
+
       const playerService = Container.get<PlayerService>(PlayerService);
       try {
         const player = await playerService.eatPlankton(playerId, planktonInfo.isPlankton);

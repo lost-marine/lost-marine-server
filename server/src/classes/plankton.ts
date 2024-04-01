@@ -22,8 +22,7 @@ export class Plankton extends Creature {
       minX: this.centerX - this.width / 2,
       minY: this.centerY - this.height / 2,
       maxX: this.centerX + this.width / 2,
-      maxY: this.centerY + this.height / 2,
-      id: this.planktonId
+      maxY: this.centerY + this.height / 2
     };
 
     return Tplankton;
@@ -35,5 +34,4 @@ export type TPlankton = {
   minY: number;
   maxX: number;
   maxY: number;
-  id: number;
 };
