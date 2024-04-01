@@ -85,7 +85,6 @@ export class PlanktonService {
         const player = await playerService.eatPlankton(playerId, planktonInfo.isPlankton);
         this.eatedPlanktonCnt++;
         this.mapPlanktonCnt--;
-        logger.info(`eatedPlankton: ${this.eatedPlanktonCnt}`);
         const result: PlanktonEatResponse = {
           isSuccess: true,
           planktonCount: player.planktonCount,
@@ -110,7 +109,6 @@ export class PlanktonService {
    * @returns {Plankton[]} 스폰 된 플랑크톤 배열
    */
   async spawnPlankton(): Promise<Plankton[]> {
-    logger.info(`플랑크톤이 재생성됩니다; eatedPlanktonCnt: ${this.eatedPlanktonCnt} mapPlanktonCnt: ${this.mapPlanktonCnt}`);
     const responedPlankton: Plankton[] = [];
     const mapService = Container.get<MapService>(MapService);
     for (let i = this.eatedPlanktonCnt; i > 0; i--) {

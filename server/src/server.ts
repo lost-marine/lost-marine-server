@@ -200,7 +200,6 @@ io.on("connection", (socket: Socket) => {
 
   // 플랑크톤 섭취 이벤트
   socket.on("plankton-eat", async (data: { playerId: number; planktonId: number }, callback) => {
-    logger.info(`플랑크톤 ID ${data.planktonId}에 대한 섭취를 시도합니다.`);
     let result: PlanktonEatResponse = {
       isSuccess: true,
       planktonCount: 0,
@@ -218,7 +217,6 @@ io.on("connection", (socket: Socket) => {
     } catch (error: unknown) {
       result.isSuccess = false;
       result.msg = getErrorMessage(error);
-      logger.error("플랑크톤 섭취 실패!!!");
     } finally {
       callback(result);
       if (result.isSuccess) {
