@@ -317,8 +317,8 @@ io.on("connection", (socket: Socket) => {
 
       sendToMe(response.playerAttackResponse.socketId, "player-status-sync", response.playerAttackResponse);
       sendToAll("item-sync", response.itemSync);
-
       setItemSync(response.itemSync);
+      sendToAll("ranking-receive", await getTenRanker());
     } catch (error) {
       logger.error("item-eat 에러" + error);
     }

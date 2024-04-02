@@ -179,7 +179,7 @@ export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
     {
       heal: 0,
       damage: 0,
-      exp: 50
+      exp: 100
     }
   ],
   [
@@ -187,23 +187,7 @@ export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
     {
       heal: 10,
       damage: 0,
-      exp: 0
-    }
-  ],
-  [
-    4,
-    {
-      heal: 20,
-      damage: 0,
-      exp: 0
-    }
-  ],
-  [
-    5,
-    {
-      heal: 0,
-      damage: 30,
-      exp: 0
+      exp: 10
     }
   ]
 ]);
