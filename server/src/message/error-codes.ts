@@ -46,5 +46,10 @@ export const errorMessages: Record<string, Record<string, string>> = {
   CANNOT_FIND_ITEM: {
     en: "Invalid Item",
     ko: "존재하지 않는 아이템입니다."
+  },
+
+  CANNOT_DO_RANDOMBOX_EVENT: {
+    en: "Cannot get Randombox",
+    ko: "랜덤 박스를 얻을 수 없습니다!"
   }
 };

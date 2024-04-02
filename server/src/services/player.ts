@@ -12,7 +12,8 @@ import {
   type itemRequest,
   type ItemInfo,
   type itemSyncResponse,
-  type KillLog
+  type KillLog,
+  type RandomEventResult
 } from "@/types";
 import { MapService } from "./map";
 // import { type Position } from "@/classes/position";
@@ -24,7 +25,7 @@ import { isAttacking } from "@/util/attack";
 import { evolutionHandler } from "@/util/evolutionHandler";
 import { SPECIES_ASSET, ITEM_ASSET, TIER_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
-import { getSuccessMessage } from "@/message/message-handler";
+import { getErrorMessage, getSuccessMessage } from "@/message/message-handler";
 import {
   deletePlayer,
   existPlayer,
@@ -47,6 +48,7 @@ import {
   updatePlayerStatusByItem
 } from "@/feat/player";
 import { logger } from "@/util/winston";
+import { randomEventRes } from "./randombox";
 // import _ from "lodash";
 @Service()
 export class PlayerService {
@@ -382,5 +384,41 @@ export class PlayerService {
     };
 
     return response;
+  }
+
+  async validateRandomEvent(player: Player): Promise<RandomEventResult> {
+    const validateResponse: RandomEventResult = {
+      isSuccess: true,
+      msg: "랜덤 박스 이벤트 검증 성공"
+    };
+    try {
+      const playerTier: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)?.tierCode);
+      if (player.nowExp < 10 || playerTier !== 4) {
+        validateResponse.isSuccess = false;
+        validateResponse.msg = "검증에 실패하였습니다.";
+        logger.error("검증에 실패했습니다...");
+      }
+    } catch (error: unknown) {
+      logger.error("검증에 실패했습니다...");
+      validateResponse.isSuccess = false;
+      validateResponse.msg = getErrorMessage(error);
+    }
+    return validateResponse;
+  }
+
+  async doPlayerRandomEvent(player: Player): Promise<RandomEventResult> {
+    logger.info("before player exp: " + player.nowExp);
+    const randomResult: RandomEventResult = await randomEventRes(player);
+    logger.info("after player exp: " + player.nowExp);
+    randomResult.nowExp = player.nowExp;
+    try {
+      await client.watch("player:" + player.playerId);
+      await updatePlayer(player);
+      await client.unwatch();
+    } catch (error: unknown) {
+      throw new Error("CANNOT_DO_RANDOMBOX_EVENT");
+    }
+    logger.info(randomResult.msg);
+    return randomResult;
   }
 }

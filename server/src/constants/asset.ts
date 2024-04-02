@@ -1,4 +1,4 @@
-import { type ItemInfo, type Species } from "@/types";
+import { type RandomEvent, type ItemInfo, type Species } from "@/types";
 
 export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
   [
@@ -133,8 +133,8 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       speciesId: 10,
       name: "가리비귀상어",
       imgUrl: "imgurl/4/1_Whale_Shark",
-      width: 269,
-      height: 137,
+      width: 280,
+      height: 132,
       power: 90,
       health: 450,
       evolutionSet: new Set([]),
@@ -147,8 +147,8 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       speciesId: 11,
       name: "대왕고래",
       imgUrl: "imgurl/4/2_humpback_whale",
-      width: 272,
-      height: 154,
+      width: 274,
+      height: 164,
       power: 70,
       health: 600,
       evolutionSet: new Set([]),
@@ -160,11 +160,54 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
 export const TIER_ASSET: Map<number, number> = new Map<number, number>([
   [0, 0],
   [1, 0],
-  [2, 30],
-  [3, 80],
-  [4, 180]
+  [2, 10],
+  [3, 20],
+  [4, 30]
 ]);
-
+export const RANDOMBOX_ASSET: Map<number, RandomEvent> = new Map<number, RandomEvent>([
+  [
+    1,
+    {
+      event: 1,
+      change: 10
+    }
+  ],
+  [
+    2,
+    {
+      event: 2,
+      change: 10
+    }
+  ],
+  [
+    3,
+    {
+      event: 3,
+      change: 3
+    }
+  ],
+  [
+    4,
+    {
+      event: 4,
+      change: 4
+    }
+  ],
+  [
+    5,
+    {
+      event: 5,
+      change: 0.1
+    }
+  ],
+  [
+    6,
+    {
+      event: 6,
+      change: 2
+    }
+  ]
+]);
 export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
   [
     1,
