@@ -6,6 +6,14 @@ import { typeEnsure } from "@/util/assert";
 import { match } from "@/util/match";
 import { logger } from "@/util/winston";
 
+/**
+ * 랜덤 이벤트를 결정하는 함수
+ * @date 4/2/2024 - 5:03:06 PM
+ * @author 박연서
+ *
+ * @async
+ * @returns {Promise<number>}
+ */
 async function randomEvent(): Promise<number> {
   const luckOrBoom: number = Math.random();
   if (luckOrBoom > 0.9) {
@@ -19,6 +27,16 @@ async function randomEvent(): Promise<number> {
   }
 }
 
+/**
+ * 결정된 랜덤 이벤트 숫자를 통해 랜덤 이벤트를 실행합니다.
+ * @date 4/2/2024 - 5:03:19 PM
+ * @author 박연서
+ *
+ * @export
+ * @async
+ * @param {Player} player
+ * @returns {Promise<RandomEventResult>}
+ */
 export async function randomEventRes(player: Player): Promise<RandomEventResult> {
   const randomEventResult: RandomEventResult = {
     isSuccess: true,

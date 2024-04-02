@@ -169,6 +169,16 @@ export function getKillLog(attackPlayer: Player, gameoverPlayer: Player): string
   return `[${attackerPlayerSpecies}] ${attackPlayer.nickname}님이 [${gameOverPlayerSpecies}] ${gameoverPlayer.nickname}님을 잡아먹었습니다`;
 }
 
+/**
+ * 랜덤 박스의 효과를 플레이어에게 적용
+ * @date 4/2/2024 - 5:02:47 PM
+ * @author 박연서
+ *
+ * @export
+ * @param {Player} player
+ * @param {number} event
+ * @param {number} change
+ */
 export function updatePlayerStatusByRandomBox(player: Player, event: number, change: number): void {
   match(event)
     .when(event === 1, () => {
