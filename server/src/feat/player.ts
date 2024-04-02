@@ -2,8 +2,9 @@ import { Area } from "@/classes/area";
 import { type Player } from "@/classes/player";
 import { SPECIES_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
-import { type Species, type PlayerAttackResponse, type ItemInfo, type PlayerStatusInfo } from "@/types";
+import type { Species, PlayerAttackResponse, ItemInfo, PlayerStatusInfo } from "@/types";
 import { createBuilder } from "@/util/builder";
+import { match } from "@/util/match";
 
 /**
  * 플레이어 위치 정보 갱신
@@ -166,4 +167,23 @@ export function getKillLog(attackPlayer: Player, gameoverPlayer: Player): string
   const gameOverPlayerSpecies: string = typeEnsure(SPECIES_ASSET.get(gameoverPlayer.speciesId)).name;
 
   return `[${attackerPlayerSpecies}] ${attackPlayer.nickname}님이 [${gameOverPlayerSpecies}] ${gameoverPlayer.nickname}님을 잡아먹었습니다`;
+}
+
+export function updatePlayerStatusByRandomBox(player: Player, event: number, change: number): void {
+  match(event)
+    .when(event === 1, () => {
+      player.maxHealth += change;
+      player.health += change;
+    })
+    .when(event === 2, () => {
+      player.health += change;
+    })
+    .when(event === 3, () => {
+      player.power += change;
+    })
+    .when(event === 4, () => {
+      player.nowExp += change;
+      player.totalExp += change;
+    });
+  player.nowExp -= 10;
 }

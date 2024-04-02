@@ -1,23 +1,10 @@
 import { type Player } from "@/classes/player";
-import { getErrorMessage } from "@/message/message-handler";
-import { getPlayer } from "@/repository/redis";
-import type { Matched, Matcher, RandomEventResult } from "@/types";
+import { RANDOMBOX_ASSET } from "@/constants/asset";
+import { updatePlayerStatusByRandomBox } from "@/feat/player";
+import type { RandomEvent, RandomEventResult } from "@/types";
 import { typeEnsure } from "@/util/assert";
+import { match } from "@/util/match";
 import { logger } from "@/util/winston";
-
-function matched<X>(x: X): Matched<X> {
-  return {
-    on: () => matched(x),
-    otherwise: () => x
-  };
-}
-
-function match<X, Y>(x: X): Matcher<X, Y> {
-  return {
-    on: (pred, fn) => (pred(x) ? matched(fn(x)) : match(x)),
-    otherwise: (fn) => fn(x)
-  };
-}
 
 async function randomEvent(): Promise<number> {
   const luckOrBoom: number = Math.random();
@@ -32,76 +19,58 @@ async function randomEvent(): Promise<number> {
   }
 }
 
-export async function randomEventRes(playerId: number): Promise<RandomEventResult> {
+export async function randomEventRes(player: Player): Promise<RandomEventResult> {
   const randomEventResult: RandomEventResult = {
     isSuccess: true,
     msg: "",
-    maxHealth: 0,
-    nowHealth: 0,
-    power: 0,
-    exp: 0,
-    speed: 0,
-    cooldown: 0
+    event: 0,
+    change: 0
   };
-  try {
-    const player: Player = typeEnsure(await getPlayer(playerId));
-    match(await randomEvent())
-      .on(
-        (x) => x === 1,
-        () => {
-          randomEventResult.msg = "최대 체력이 증가합니다.";
-          randomEventResult.maxHealth = 10;
-          player.maxHealth += 30;
-          player.health += 30;
-        }
-      )
-      .on(
-        (x) => x === 2,
-        () => {
-          randomEventResult.msg = "현재 체력이 증가합니다.";
-          randomEventResult.nowHealth = 10;
-          player.health += 10;
-        }
-      )
-      .on(
-        (x) => x === 3,
-        () => {
-          randomEventResult.msg = "공격력이 증가합니다.";
-          randomEventResult.power = 5;
-          player.power += 5;
-        }
-      )
-      .on(
-        (x) => x === 4,
-        () => {
-          randomEventResult.msg = "경험치가 증가합니다.";
-          randomEventResult.exp = 10;
-          player.nowExp += 10;
-          player.totalExp += 10;
-        }
-      )
-      .on(
-        (x) => x === 5,
-        () => {
-          randomEventResult.msg = "이동속도가 증가합니다.";
-          randomEventResult.speed = 3;
-        }
-      )
-      .on(
-        (x) => x === 6,
-        () => {
-          randomEventResult.msg = "대시 쿨타임이 2초 감소합니다.";
-          randomEventResult.cooldown = 2;
-        }
-      )
-      .otherwise(() => {
-        randomEventResult.msg = "안타깝게도 꽝이 걸렸습니다.";
-      });
-  } catch (error: unknown) {
-    logger.error(error);
-    randomEventResult.isSuccess = false;
-    randomEventResult.msg = getErrorMessage(error);
-  }
+
+  const event: number = await randomEvent();
+  const randomEventAsset: RandomEvent = typeEnsure(RANDOMBOX_ASSET.get(event));
+  match(event)
+    .when(event === 1, async () => {
+      randomEventResult.msg = `최대 체력이 ${randomEventAsset.change} 증가합니다.`;
+      randomEventResult.event = 1;
+      randomEventResult.change = randomEventAsset.change;
+      updatePlayerStatusByRandomBox(player, event, randomEventResult.change);
+    })
+    .when(event === 2, () => {
+      randomEventResult.event = 2;
+      randomEventResult.msg = `현재 체력이 ${randomEventAsset.change} 증가합니다.`;
+      randomEventResult.change = randomEventAsset.change;
+      updatePlayerStatusByRandomBox(player, event, randomEventResult.change);
+    })
+    .when(event === 3, () => {
+      randomEventResult.event = 3;
+      randomEventResult.msg = `공격력이 ${randomEventAsset.change} 증가합니다.`;
+      randomEventResult.change = randomEventAsset.change;
+      updatePlayerStatusByRandomBox(player, event, randomEventResult.change);
+    })
+    .when(event === 4, () => {
+      randomEventResult.event = 4;
+      randomEventResult.msg = `경험치가 ${randomEventAsset.change} 증가합니다.`;
+      randomEventResult.change = randomEventAsset.change;
+      updatePlayerStatusByRandomBox(player, event, randomEventResult.change);
+    })
+    .when(event === 5, () => {
+      randomEventResult.event = 5;
+      randomEventResult.msg = `이동속도가 ${randomEventAsset.change} 증가합니다.`;
+      randomEventResult.change = randomEventAsset.change;
+      updatePlayerStatusByRandomBox(player, event, 0);
+    })
+    .when(event === 6, () => {
+      randomEventResult.event = 6;
+      randomEventResult.msg = `대시 쿨타임이 ${randomEventAsset.change}초 감소합니다.`;
+      randomEventResult.change = randomEventAsset.change;
+      updatePlayerStatusByRandomBox(player, event, 0);
+    })
+    .otherwise(() => {
+      randomEventResult.event = 7;
+      randomEventResult.msg = "안타깝게도 꽝이 걸렸습니다.";
+      updatePlayerStatusByRandomBox(player, event, 0);
+    });
 
   return randomEventResult;
 }

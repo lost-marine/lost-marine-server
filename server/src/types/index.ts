@@ -120,20 +120,22 @@ export type KillLog = {
 export type RandomEventResult = {
   isSuccess: boolean;
   msg: string;
-  maxHealth: number;
-  nowHealth: number;
-  power: number;
-  exp: number;
-  speed: number;
-  cooldown: number;
+  event?: number;
+  change?: number;
+  nowExp?: number;
 };
 
 export type Matched<X> = {
-  on: () => Matched<X>;
+  when: () => Matched<X>;
   otherwise: () => X;
 };
 
 export type Matcher<X, Y> = {
-  on: (pred: (x: X) => boolean, fn: (x: X) => Y) => Matcher<X, Y>;
+  when: (pred: boolean, fn: (x: X) => Y) => Matcher<X, Y>;
   otherwise: (fn: (x: X) => Y) => Y;
+};
+
+export type RandomEvent = {
+  event: number;
+  change: number;
 };

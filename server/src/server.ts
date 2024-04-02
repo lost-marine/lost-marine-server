@@ -19,7 +19,8 @@ import {
   type NicknameRequest,
   type PlayerAttackResponse,
   type itemRequest,
-  type itemSyncResponse
+  type itemSyncResponse,
+  type RandomEventResult
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -323,6 +324,37 @@ io.on("connection", (socket: Socket) => {
     sendToAll("item-sync", response.itemSync);
 
     setItemSync(response.itemSync);
+  });
+
+  // 랜덤 박스 이벤트
+  socket.on("random-box-event", async (data: { playerId: number }, callback) => {
+    logger.info("랜덤 박스 이벤트!");
+    logger.info("플레이어 아이디: " + data.playerId);
+    let response: RandomEventResult = {
+      isSuccess: true,
+      msg: "랜덤 박스 이벤트 성공!"
+    };
+    try {
+      const player: Player = typeEnsure(await getPlayer(data.playerId));
+      logger.info("플레이어 정보 갖고오기");
+      response = await playerService.validateRandomEvent(player);
+      if (response.isSuccess) {
+        logger.info("검증에 성공했습니다!");
+        response = await playerService.doPlayerRandomEvent(player);
+        if (response.event === 4) {
+          await zADDPlayer(data.playerId, player.totalExp);
+          sendToAll("ranking-receive", await getTenRanker());
+        }
+      }
+    } catch (error: unknown) {
+      logger.error(error);
+      response.isSuccess = false;
+      response.msg = getErrorMessage(error);
+    } finally {
+      logger.info(response.msg);
+      logger.info("전달 player.exp: " + response.nowExp);
+      callback(response);
+    }
   });
 });
 
