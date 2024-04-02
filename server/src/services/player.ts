@@ -138,7 +138,9 @@ export class PlayerService {
     const useExp: number = typeEnsure(TIER_ASSET.get(targetSpecies.tierCode));
     const beforeTierExp: number = typeEnsure(TIER_ASSET.get(targetSpecies.tierCode - 1));
     evolvePlayer(player, targetSpecies, useExp - beforeTierExp);
+    await client.watch("player:" + player.playerId);
     await updatePlayer(player);
+    await client.unwatch();
   }
 
   /**

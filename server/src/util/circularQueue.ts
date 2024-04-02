@@ -39,16 +39,8 @@ export class CircularQueue {
   };
 
   getArea = (): Area => {
-    let area: Area;
-    while (true) {
-      area = this.deQueue();
-      this.enQueue(area);
-
-      // TODO: 검증 로직
-      if (area != null) {
-        break;
-      }
-    }
+    const area: Area = this.deQueue();
+    this.enQueue(area);
 
     return area;
   };

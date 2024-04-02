@@ -160,9 +160,9 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
 export const TIER_ASSET: Map<number, number> = new Map<number, number>([
   [0, 0],
   [1, 0],
-  [2, 5],
-  [3, 15],
-  [4, 25]
+  [2, 30],
+  [3, 80],
+  [4, 180]
 ]);
 
 export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
