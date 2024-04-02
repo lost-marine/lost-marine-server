@@ -386,6 +386,15 @@ export class PlayerService {
     return response;
   }
 
+  /**
+   * 랜덤 박스 이벤트 발생 검증을 시도합니다.
+   * @date 4/2/2024 - 5:03:46 PM
+   * @author 박연서
+   *
+   * @async
+   * @param {Player} player
+   * @returns {Promise<RandomEventResult>}
+   */
   async validateRandomEvent(player: Player): Promise<RandomEventResult> {
     const validateResponse: RandomEventResult = {
       isSuccess: true,
@@ -406,6 +415,15 @@ export class PlayerService {
     return validateResponse;
   }
 
+  /**
+   * 검증 이벤트를 시도하고 변화 사항을 redis에 update 합니다.
+   * @date 4/2/2024 - 5:04:06 PM
+   * @author 박연서
+   *
+   * @async
+   * @param {Player} player
+   * @returns {Promise<RandomEventResult>}
+   */
   async doPlayerRandomEvent(player: Player): Promise<RandomEventResult> {
     logger.info("before player exp: " + player.nowExp);
     const randomResult: RandomEventResult = await randomEventRes(player);
