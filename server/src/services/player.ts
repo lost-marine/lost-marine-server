@@ -369,6 +369,7 @@ export class PlayerService {
 
     updatePlayerStatusByItem(item, player);
     await updatePlayer(player);
+    await zADDPlayer(player.playerId, player.totalExp);
 
     const response = {
       playerAttackResponse: toPlayerAttackResponse(player),
