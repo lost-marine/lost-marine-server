@@ -109,7 +109,7 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       height: 176,
       power: 50,
       health: 300,
-      evolutionSet: new Set([10]), // 대왕고래
+      evolutionSet: new Set([10, 11]), // 대왕고래
       tierCode: 3
     }
   ],
@@ -123,7 +123,7 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       height: 67,
       power: 70,
       health: 250,
-      evolutionSet: new Set([11]), // 고래상어
+      evolutionSet: new Set([10]), // 고래상어
       tierCode: 3
     }
   ],
