@@ -365,9 +365,7 @@ const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
   socket.to(roomId).except(socket.id).emit(event, data);
 };
 
-httpServer.listen(port, () => {
-  console.log(process.env.NODE_ENV);
-});
+httpServer.listen(port, () => {});
 
 const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
   const attackedPlayerResponse: AttackedPlayerResponse = {
