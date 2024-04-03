@@ -195,6 +195,7 @@ io.on("connection", (socket: Socket) => {
 
     if (result !== -1) {
       sendWithoutMe(socket, "player-quit", result);
+      sendToAll("ranking-receive", await getTenRanker());
     }
   });
 
@@ -364,7 +365,9 @@ const sendWithoutMe = (socket: Socket, event: string, data: any): void => {
   socket.to(roomId).except(socket.id).emit(event, data);
 };
 
-httpServer.listen(port, () => {});
+httpServer.listen(port, () => {
+  console.log(process.env.NODE_ENV);
+});
 
 const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
   const attackedPlayerResponse: AttackedPlayerResponse = {
