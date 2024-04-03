@@ -195,6 +195,7 @@ io.on("connection", (socket: Socket) => {
 
     if (result !== -1) {
       sendWithoutMe(socket, "player-quit", result);
+      sendToAll("ranking-receive", await getTenRanker());
     }
   });
 
