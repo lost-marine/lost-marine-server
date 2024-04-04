@@ -113,6 +113,8 @@ io.on("connection", (socket: Socket) => {
     const result = await playerService.validateNickName(typeEnsure(player, "INVALID_INPUT"));
     if (result.isSuccess) {
       void socket.join(roomId);
+      logger.info("플레이어 입장");
+
       const addResult = await playerService.addPlayer(player, socket.id);
       const gameStartReq: PlayerResponse | null = addResult;
       if (gameStartReq !== null) {
@@ -383,6 +385,8 @@ const attackPlayer = async (result: PlayerAttackResponse[]): Promise<void> => {
 
     // 게임 오버인 경우
     if (player.isGameOver) {
+      logger.info("플레이어 게임 오버");
+
       const gameOverResponse = await playerService.getGameOver(result);
       sendToMe(mySocketId, "game-over", gameOverResponse.playerGameOver);
       sendToAll("player-quit", player.playerId);
