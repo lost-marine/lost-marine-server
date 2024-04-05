@@ -233,7 +233,7 @@ export async function getTenRanker(): Promise<RankInfo[]> {
   try {
     data = typeEnsure(await client.zRangeWithScores("rank", 0, 10, { REV: true }), "Cannot get ZRANGE");
     for (const item of data) {
-      const thisPlayer: Player = typeEnsure(await getPlayer(Number(item.value)));
+      const thisPlayer: Player = typeEnsure(await getPlayer(Number(item.value)), "Cannot convert INFO");
       const info: RankInfo = {
         playerId: thisPlayer.playerId,
         nickname: thisPlayer.nickname,
