@@ -345,6 +345,8 @@ io.on("connection", (socket: Socket) => {
           await zADDPlayer(data.playerId, player.totalExp);
           sendToAll("ranking-receive", await getTenRanker());
         }
+        const { socketId, ...playerSyncInfo } = player;
+        sendToMe(player.socketId, "player-status-sync", playerSyncInfo);
       }
     } catch (error: unknown) {
       logger.error(error);
