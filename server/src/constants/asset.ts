@@ -7,7 +7,7 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       speciesId: 1,
       name: "흰동가리",
       imgUrl: "imgurl/1/1_nemo", // img경로/레벨/개체id_개체명
-      width: 63,
+      width: 66,
       height: 42,
       power: 10,
       health: 100,
@@ -133,8 +133,8 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       speciesId: 10,
       name: "가리비귀상어",
       imgUrl: "imgurl/4/1_Whale_Shark",
-      width: 269,
-      height: 137,
+      width: 280,
+      height: 132,
       power: 90,
       health: 450,
       evolutionSet: new Set([]),
@@ -147,8 +147,8 @@ export const SPECIES_ASSET: Map<number, Species> = new Map<number, Species>([
       speciesId: 11,
       name: "대왕고래",
       imgUrl: "imgurl/4/2_humpback_whale",
-      width: 272,
-      height: 154,
+      width: 274,
+      height: 164,
       power: 70,
       health: 600,
       evolutionSet: new Set([]),
@@ -179,15 +179,15 @@ export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
     {
       heal: 0,
       damage: 0,
-      exp: 100
+      exp: 50
     }
   ],
   [
     3,
     {
-      heal: 10,
+      heal: 20,
       damage: 0,
-      exp: 10
+      exp: 20
     }
   ]
 ]);
