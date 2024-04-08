@@ -21,4 +21,5 @@ export class Player extends Creature {
   isGameOver: boolean = false;
   speciesId: number = 0;
   isSleeping: boolean = true;
+  maxHealth: number = 100;
 }

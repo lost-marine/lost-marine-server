@@ -2,8 +2,9 @@ import { Area } from "@/classes/area";
 import { type Player } from "@/classes/player";
 import { SPECIES_ASSET } from "@/constants/asset";
 import { typeEnsure } from "@/util/assert";
-import { type Species, type PlayerAttackResponse, type ItemInfo, type PlayerStatusInfo } from "@/types";
+import type { Species, PlayerAttackResponse, ItemInfo, PlayerStatusInfo } from "@/types";
 import { createBuilder } from "@/util/builder";
+import { match } from "@/util/match";
 
 /**
  * 플레이어 위치 정보 갱신
@@ -102,6 +103,7 @@ export function evolvePlayer(player: Player, targetSpecies: Species, usedExp: nu
   player.width = targetSpecies.width;
   player.height = targetSpecies.height;
   player.health = targetSpecies.health;
+  player.maxHealth = targetSpecies.health;
 }
 
 /**
@@ -114,11 +116,9 @@ export function evolvePlayer(player: Player, targetSpecies: Species, usedExp: nu
  * @param {Player} player
  */
 export function updatePlayerStatusByItem(item: ItemInfo, player: Player): void {
-  const maximunHealth: number = typeEnsure(SPECIES_ASSET.get(player.speciesId)).health;
-
   if (item.heal > 0) {
-    player.health += maximunHealth * (item.heal / 100);
-    if (maximunHealth < player.health) player.health = maximunHealth;
+    player.health += player.health * (item.heal % 100);
+    if (player.maximunHealth < player.health) player.health = player.maximunHealth;
   }
 
   if (item.damage > 0) {
@@ -168,4 +168,33 @@ export function getKillLog(attackPlayer: Player, gameoverPlayer: Player): string
   const gameOverPlayerSpecies: string = typeEnsure(SPECIES_ASSET.get(gameoverPlayer.speciesId)).name;
 
   return `[${attackerPlayerSpecies}] ${attackPlayer.nickname}님이 [${gameOverPlayerSpecies}] ${gameoverPlayer.nickname}님을 잡아먹었습니다`;
+}
+
+/**
+ * 랜덤 박스의 효과를 플레이어에게 적용
+ * @date 4/2/2024 - 5:02:47 PM
+ * @author 박연서
+ *
+ * @export
+ * @param {Player} player
+ * @param {number} event
+ * @param {number} change
+ */
+export function updatePlayerStatusByRandomBox(player: Player, event: number, change: number): void {
+  match(event)
+    .when(event === 1, () => {
+      player.maxHealth += change;
+      player.health += change;
+    })
+    .when(event === 2, () => {
+      player.health += change;
+    })
+    .when(event === 3, () => {
+      player.power += change;
+    })
+    .when(event === 4, () => {
+      player.nowExp += change;
+      player.totalExp += change;
+    });
+  player.nowExp -= 10;
 }

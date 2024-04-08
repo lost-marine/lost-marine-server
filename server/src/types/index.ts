@@ -124,3 +124,26 @@ export type KillLog = {
   type: string;
   timeStamp: number;
 };
+
+export type RandomEventResult = {
+  isSuccess: boolean;
+  msg: string;
+  event?: number;
+  change?: number;
+  nowExp?: number;
+};
+
+export type Matched<X> = {
+  when: () => Matched<X>;
+  otherwise: () => X;
+};
+
+export type Matcher<X, Y> = {
+  when: (pred: boolean, fn: (x: X) => Y) => Matcher<X, Y>;
+  otherwise: (fn: (x: X) => Y) => Y;
+};
+
+export type RandomEvent = {
+  event: number;
+  change: number;
+};

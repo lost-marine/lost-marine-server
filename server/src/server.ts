@@ -20,7 +20,8 @@ import {
   type PlayerAttackResponse,
   type itemRequest,
   type itemSyncResponse,
-  type AttackedPlayerResponse
+  type AttackedPlayerResponse,
+  type RandomEventResult
 } from "./types";
 import { PlanktonService } from "./services/plankton";
 import { type Plankton } from "./classes/plankton";
@@ -133,7 +134,7 @@ io.on("connection", (socket: Socket) => {
   });
   // 진화요청(Client→ Server)
   socket.on("player-evolution", async (data: EvolveRequest, callback) => {
-    logger.info("진화를 요청합니다.");
+    logger.info("진화 요청이 들어왔습니다!");
     let validateResponse: ValidateRespone = {
       isSuccess: true,
       msg: getSuccessMessage("PLAYER_EVOLVE_SUCCESS")
@@ -324,6 +325,72 @@ io.on("connection", (socket: Socket) => {
       sendToAll("ranking-receive", await getTenRanker());
     } catch (error) {
       logger.error("item-eat 에러" + error);
+    }
+  });
+
+  // 랜덤 박스 이벤트
+  socket.on("random-box-event", async (data: { playerId: number }, callback) => {
+    logger.info("랜덤 박스 이벤트!");
+    logger.info("플레이어 아이디: " + data.playerId);
+    let response: RandomEventResult = {
+      isSuccess: true,
+      msg: "랜덤 박스 이벤트 성공!"
+    };
+    try {
+      const player: Player = typeEnsure(await getPlayer(data.playerId));
+      logger.info("플레이어 정보 갖고오기");
+      response = await playerService.validateRandomEvent(player);
+      if (response.isSuccess) {
+        logger.info("검증에 성공했습니다!");
+        response = await playerService.doPlayerRandomEvent(player);
+        if (response.event === 4) {
+          await zADDPlayer(data.playerId, player.totalExp);
+          sendToAll("ranking-receive", await getTenRanker());
+        }
+        const { socketId, ...playerSyncInfo } = player;
+        sendToMe(player.socketId, "player-status-sync", playerSyncInfo);
+      }
+    } catch (error: unknown) {
+      logger.error(error);
+      response.isSuccess = false;
+      response.msg = getErrorMessage(error);
+    } finally {
+      logger.info(response.msg);
+      logger.info("전달 player.exp: " + response.nowExp);
+      callback(response);
+    }
+  });
+
+  // 랜덤 박스 이벤트
+  socket.on("random-box-event", async (data: { playerId: number }, callback) => {
+    logger.info("랜덤 박스 이벤트!");
+    logger.info("플레이어 아이디: " + data.playerId);
+    let response: RandomEventResult = {
+      isSuccess: true,
+      msg: "랜덤 박스 이벤트 성공!"
+    };
+    try {
+      const player: Player = typeEnsure(await getPlayer(data.playerId));
+      logger.info("플레이어 정보 갖고오기");
+      response = await playerService.validateRandomEvent(player);
+      if (response.isSuccess) {
+        logger.info("검증에 성공했습니다!");
+        response = await playerService.doPlayerRandomEvent(player);
+        if (response.event === 4) {
+          await zADDPlayer(data.playerId, player.totalExp);
+          sendToAll("ranking-receive", await getTenRanker());
+        }
+        const { socketId, ...playerSyncInfo } = player;
+        sendToMe(player.socketId, "player-status-sync", playerSyncInfo);
+      }
+    } catch (error: unknown) {
+      logger.error(error);
+      response.isSuccess = false;
+      response.msg = getErrorMessage(error);
+    } finally {
+      logger.info(response.msg);
+      logger.info("전달 player.exp: " + response.nowExp);
+      callback(response);
     }
   });
 });
