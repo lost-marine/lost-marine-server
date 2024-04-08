@@ -164,6 +164,7 @@ export const TIER_ASSET: Map<number, number> = new Map<number, number>([
   [3, 20],
   [4, 30]
 ]);
+
 export const RANDOMBOX_ASSET: Map<number, RandomEvent> = new Map<number, RandomEvent>([
   [
     1,
@@ -208,6 +209,7 @@ export const RANDOMBOX_ASSET: Map<number, RandomEvent> = new Map<number, RandomE
     }
   ]
 ]);
+
 export const ITEM_ASSET: Map<number, ItemInfo> = new Map<number, ItemInfo>([
   [
     1,
